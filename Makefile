@@ -7,5 +7,5 @@ parser:
 clean:
 	rm -f tokens.c
 	rm -f parser.c
-	rm -f tokens.c
+	rm -f parser.h
 	rm -f parser
