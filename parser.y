@@ -13,7 +13,7 @@ void yyerror(const char *s) { printf("ERROR: %s\n", s); }
 	char c_val;
 	char* s_val;
 	int il_val[100];
-	int expression/* unsure*/
+	int expression;/* unsure*/
 }
 
 %token variable_definition

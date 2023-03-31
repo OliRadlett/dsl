@@ -12,7 +12,7 @@ enum datatypes {
 };
 
 
-FILE *yyin;
+extern "C" FILE *yyin;
 
 variable *variable_table = (variable *)0;
 
