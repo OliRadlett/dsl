@@ -154,7 +154,7 @@ Node* interpret(Node* node)
             }
             // At some point we return the value here
             std::cout << "Variable " << identifier->name << " exists in current scope" << std::endl;
-            return identifier;
+            return currentScope[identifier->name];
         }
         break;
     case VARIABLEDEFINITION:
