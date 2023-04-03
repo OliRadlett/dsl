@@ -20,3 +20,5 @@ variable *get_variable(char* name);
 
 int integer_init(char* var_name, int value);
 int list_init(char* var_name, int value[]);
+
+

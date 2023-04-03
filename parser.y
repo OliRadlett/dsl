@@ -40,10 +40,10 @@ program: statements { programBlock = $1; };
 statements: statement { $$ = new Block(); $$->statements.push_back($<statement>1); }
  			| statements statement { $1->statements.push_back($<statement>2); };
 
-statement: variable_definition | function_definition;
+statement: variable_definition | function_definition | expression { $$ = new ExpressionStatement(*$1); };
 
 variable_definition: T_VARIABLE_DEFINITION identifier { $$ = new VariableDefinition(*$2); }
-					| T_VARIABLE_DEFINITION identifier T_EQUALS expression { $$ = new VariableDefinition(*$2); }
+					| T_VARIABLE_DEFINITION identifier T_EQUALS expression { $$ = new VariableDefinition(*$2, $4); }
 
 function_definition: identifier T_OPEN_BRACKETS T_CLOSE_BRACKETS block { $$ = new FunctionDefinition(*$1, *$4); }
 
@@ -53,6 +53,7 @@ numeric : T_INTEGER { $$ = new Integer(atol($1->c_str())); delete $1; }
 
 expression: identifier { $<identifier>$ = $1; }
      | numeric
+     | identifier T_OPEN_BRACKETS T_CLOSE_BRACKETS { $$ = new FunctionCall(*$1); }
 
 block : T_OPEN_SQUIGGLY statements T_CLOSE_SQUIGGLY { $$ = $2; }
       | T_OPEN_SQUIGGLY T_CLOSE_SQUIGGLY { $$ = new Block(); }

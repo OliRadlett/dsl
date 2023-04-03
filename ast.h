@@ -7,7 +7,7 @@ class Expression;
 
 typedef std::vector<Statement*> StatementList;
 typedef std::vector<Expression*> ExpressionList;
-typedef enum {NODE, EXPRESSION, STATEMENT, BLOCK, INTEGER, IDENTIFIER, VARIABLEDEFINITION, FUNCTIONDEFINITION, SPECIALFUNCTIONDEFINITION} type;
+typedef enum {NODE, EXPRESSION, STATEMENT, BLOCK, INTEGER, IDENTIFIER, VARIABLEDEFINITION, FUNCTIONDEFINITION, SPECIALFUNCTIONDEFINITION, FUNCTIONCALL, EXPRESSIONSTATEMENT} type;
 
 class Node {
 public:
@@ -21,7 +21,7 @@ class Expression : public Node {
 class Statement : public Node {
 };
 
-class Block: public Expression {
+class Block : public Expression {
 public:
 	const int getNodeType() const override { return BLOCK; }
 	StatementList statements;
@@ -38,11 +38,26 @@ public:
 class Identifier : public Expression {
 public:
 	const int getNodeType() const override { return IDENTIFIER; }
-	std::string name;	
+	std::string name;
 	Identifier(const std::string& name) : name(name) {};
 };
 
-class VariableDefinition: public Statement {
+class FunctionCall : public Expression {
+public:
+	const int getNodeType() const override { return FUNCTIONCALL; }
+	Identifier& id;
+	// Arguments
+	FunctionCall(Identifier& id) : id(id) {};
+};
+
+class ExpressionStatement : public Statement {
+public:
+	const int getNodeType() const override { return EXPRESSIONSTATEMENT; }
+    Expression& expression;
+    ExpressionStatement(Expression& expression) : expression(expression) { }
+};
+
+class VariableDefinition : public Statement {
 public:
 	const int getNodeType() const override { return VARIABLEDEFINITION; }
 	// const Identifier& type;
@@ -52,7 +67,7 @@ public:
 	VariableDefinition(/*const Identifier& type, */Identifier& id, Expression *assignmentExpression) : /*type(type),*/ id(id), assignmentExpression(assignmentExpression) {}
 };
 
-class FunctionDefinition: public Statement {
+class FunctionDefinition : public Statement {
 public:
 	const int getNodeType() const override { return FUNCTIONDEFINITION; }
 	// const Identifier& type;
@@ -62,7 +77,7 @@ public:
 	FunctionDefinition(/*const Identifier& type, */ Identifier& id, Block &block): id(id), block(block) {}
 };
 
-class SpecialFunctionDefinition: public Statement {
+class SpecialFunctionDefinition : public Statement {
 public:
 	const int getNodeType() const override { return SPECIALFUNCTIONDEFINITION; }
 };

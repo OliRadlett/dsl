@@ -1,8 +1,7 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include <string>
 #include <iostream>
-#include <typeinfo>
+#include <unordered_map>
+#include <stack>
 #include "main.h"
 #include "ast.h"
 
@@ -17,6 +16,10 @@ extern variable *variable_table;
 
 
 extern "C" FILE *yyin;
+
+typedef std::unordered_map<std::string, Node*> VariableTable;
+std::stack<VariableTable> VariableTableStack;
+
 
 // variable *variable_table = (variable *)0;
 
@@ -100,9 +103,9 @@ extern "C" FILE *yyin;
 // }
 
 
-int interpret(Statement* statement)
+Node* interpret(Node* node)
 {
-    switch (statement->getNodeType())
+    switch (node->getNodeType())
     {
     case NODE:
         std::cout << "Node" << std::endl;
@@ -114,24 +117,101 @@ int interpret(Statement* statement)
         std::cout << "Statement" << std::endl;
         break;
     case BLOCK:
-        std::cout << "Block" << std::endl;
+        {
+            std::cout << "Block" << std::endl;
+            Block* block = dynamic_cast<Block*>(node);
+            // Create a new symbol table for this block's scope
+            VariableTable blockScope;
+            // Push the symbol table onto the stack
+            VariableTableStack.push(blockScope);
+            // Interpret each statement in the block
+            for (auto stmt : block->statements) {
+                interpret(stmt);
+            }
+            // Pop the symbol table off the stack when we leave the block
+            VariableTableStack.pop();
+        }
         break;
     case INTEGER:
-        std::cout << "Integer" << std::endl;
+        {
+            std::cout << "Integer" << std::endl;
+            Integer* integer = dynamic_cast<Integer*>(node);
+            return integer;
+        }
         break;
     case IDENTIFIER:
-        std::cout << "Identifier" << std::endl;
+        {
+            // Here we want to lookup the name in the function and variable tables and if its present we return either a value or a function pointer
+            std::cout << "Identifier" << std::endl;
+            Identifier* identifier = dynamic_cast<Identifier*>(node);
+            
+            VariableTable& currentScope = VariableTableStack.top();
+            auto iter = currentScope.find(identifier->name);
+            if (iter == currentScope.end())
+            {
+                // If the identifier isn't found, throw an error
+                throw std::runtime_error("Undefined variable: " + identifier->name);
+            }
+            // At some point we return the value here
+            std::cout << "Variable " << identifier->name << " exists in current scope" << std::endl;
+            return identifier;
+        }
         break;
     case VARIABLEDEFINITION:
-        std::cout << "Variable definition" << std::endl;
+        {
+            std::cout << "Variable definition" << std::endl;
+            VariableDefinition* variableDefinition = dynamic_cast<VariableDefinition*>(node);
+
+            Node* assignmentExpr = nullptr;
+            if (variableDefinition->assignmentExpression != nullptr)
+            {
+                assignmentExpr = interpret(variableDefinition->assignmentExpression);
+                // Functions will need lots of work here
+                // All other datatypes will need adding
+                if (dynamic_cast<Integer*>(assignmentExpr))
+                {
+                    Integer* value = dynamic_cast<Integer*>(assignmentExpr);
+                    std::cout << "Identifier:" << variableDefinition->id.name  << " Assignment Expression: " << value->value << std::endl;
+
+                }
+
+            }
+            else
+            {
+                std::cout << "Identifier: " << variableDefinition->id.name << " (no assignment expression)" << std::endl;
+            }
+            // Add the variable to the current scope's symbol table
+            VariableTable& currentScope = VariableTableStack.top();
+            currentScope[variableDefinition->id.name] = assignmentExpr;
+        }
+        break;
+    case FUNCTIONCALL:
+        {
+            std::cout << "Function call" << std::endl;
+            FunctionCall* call = dynamic_cast<FunctionCall*>(node);
+            std::cout << "Identifier: " << call->id.name << std::endl;
+        }
+        break;
+    case EXPRESSIONSTATEMENT:
+        {
+        std::cout << "Expression statement" << std::endl;
+        ExpressionStatement* e = dynamic_cast<ExpressionStatement*>(node);
+        return interpret(&e->expression);
+        }
         break;
     case FUNCTIONDEFINITION:
-        std::cout << "Function definition" << std::endl;
-        FunctionDefinition* fd = dynamic_cast<FunctionDefinition*>(statement);
-        Block* block = &fd->block;
-        for (auto stmt : block->statements) {
-            interpret(stmt);
+        {
+            std::cout << "Function definition" << std::endl;
+            FunctionDefinition* fd = dynamic_cast<FunctionDefinition*>(node);
+            std::cout << "Identifier: " << fd->id.name << std::endl;
+            Block* block = &fd->block;
+            for (auto stmt : block->statements) {
+                interpret(stmt);
+            }
         }
+        break;
+    default:
+        std::cout << "Unknown node type: " << node->getNodeType() << std::endl;
         break;
     }
 }
@@ -151,11 +231,15 @@ int main(int argc, char **argv)
 
     yyparse();
 
+    // Create global scope
+    VariableTable globalScope;
+    VariableTableStack.push(globalScope);
+
     std::cout << "Root node address: " << programBlock <<  std::endl;
 
     for (auto statement : programBlock->statements)
     {
-        std::cout << "Interpreting statement of type " << statement->getNodeType() << std::endl;
+        // std::cout << "Interpreting statement of type " << statement->getNodeType() << std::endl;
         interpret(statement);
     }
 
