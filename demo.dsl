@@ -1,8 +1,6 @@
-var ranks: rank = [1, 2, 3]
-var suits: suit = 2
+var ranks
+var suits
 
-setup () {
-	
-	var test: rank = 3
-
+x () {
+	var test
 }
