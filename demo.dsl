@@ -1,8 +1,9 @@
-var ranks = 1
-var suits = 1
+var x = 1
+var y = x
 
-x () {
-	var y
+p() {
+	var a = 2
+	var b = a
 }
 
-x()
+b = 2

@@ -2,6 +2,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <stack>
+#include <typeinfo>
 #include "main.h"
 #include "ast.h"
 
@@ -91,10 +92,14 @@ Node* interpret(Node* node)
             Identifier* identifier = dynamic_cast<Identifier*>(node);
             SymbolTable& currentScope = VariableTableStack.top();
 
-            if (identifier_available(identifier->name, currentScope))
+            if (!identifier_available(identifier->name, currentScope))
             {
                 std::cout << "Variable " << identifier->name << " exists in current scope" << std::endl;
                 return currentScope[identifier->name];
+            }
+            else
+            {
+                std::cout << identifier->name << " doesn't exist in current scope" << std::endl;
             }
         }
         break;
@@ -110,14 +115,23 @@ Node* interpret(Node* node)
                 Node* assignmentExpr = nullptr;
                 if (variableDefinition->assignmentExpression != nullptr)
                 {
-                    assignmentExpr = interpret(variableDefinition->assignmentExpression);
                     // Functions will need lots of work here
                     // All other datatypes will need adding
-                    if (dynamic_cast<Integer*>(assignmentExpr))
-                    {
-                        Integer* value = dynamic_cast<Integer*>(assignmentExpr);
-                        std::cout << "Identifier:" << variableDefinition->id.name  << " Assignment Expression: " << value->value << std::endl;
 
+                    assignmentExpr = interpret(variableDefinition->assignmentExpression);
+
+                    if (Integer* value = dynamic_cast<Integer*>(assignmentExpr))
+                    {
+                        std::cout << "Variable defined. Identifier:" << variableDefinition->id.name  << " Assignment Expression: " << value->value << std::endl;
+                    }
+                    else if (Identifier* value = dynamic_cast<Identifier*>(assignmentExpr))
+                    {
+                        std::cout << "Attempting to assign variable to the value of a variable" << std::endl;
+                        Node* n = interpret(assignmentExpr);
+                    }
+                    else
+                    {
+                        std::cout << "Something shite happened" << std::endl;
                     }
                 }
                 else
@@ -131,26 +145,6 @@ Node* interpret(Node* node)
             {
                 throw std::runtime_error("Identifier exists in current scope: " + variableDefinition->id.name);
             }
-
-            Node* assignmentExpr = nullptr;
-            if (variableDefinition->assignmentExpression != nullptr)
-            {
-                assignmentExpr = interpret(variableDefinition->assignmentExpression);
-                // Functions will need lots of work here
-                // All other datatypes will need adding
-                if (dynamic_cast<Integer*>(assignmentExpr))
-                {
-                    Integer* value = dynamic_cast<Integer*>(assignmentExpr);
-                    std::cout << "Identifier:" << variableDefinition->id.name  << " Assignment Expression: " << value->value << std::endl;
-
-                }
-            }
-            else
-            {
-                std::cout << "Identifier: " << variableDefinition->id.name << " (no assignment expression)" << std::endl;
-            }
-            // Add the variable to the current scope's symbol table
-            currentScope[variableDefinition->id.name] = assignmentExpr;
         }
         break;
     case FUNCTIONCALL:
