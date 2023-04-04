@@ -1,8 +1,8 @@
 var ranks = 1
-var suits = ranks
+var suits = 1
 
 x () {
-	var test
+	var y
 }
 
 x()
