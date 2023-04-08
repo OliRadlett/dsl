@@ -28,7 +28,10 @@ void print_debug_info()
     std::cout << "[Global Variable Table]" << std::endl;
     for (auto it = currentScope.begin(); it != currentScope.end(); ++it)
     {
-        std::cout << it->first << std::endl;
+        if (Integer* integer = dynamic_cast<Integer*>(it->second))
+        {
+            std::cout << it->first << ": " << integer->value << std::endl;
+        }
     }
     // Etc for each scope
 }
