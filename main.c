@@ -49,6 +49,57 @@ bool identifier_available(std::string name, SymbolTable& currentScope)
     return false;
 }
 
+bool evaluate(Node* lhs, Node* rhs, int op)
+{
+    switch (op)
+    {
+        case EQUALS:
+        {
+            if (Integer* lhs_ = dynamic_cast<Integer*>(lhs))
+            {
+                if (Integer* rhs_ = dynamic_cast<Integer*>(rhs))
+                {
+                   std::cout << "Evalutating " << lhs_->value << " == " << rhs_->value << std::endl;
+                   if (lhs_->value == rhs_->value)
+                   {
+                    return true;
+                   }
+                   else
+                   {
+                    return false;
+                   }
+                }
+            }
+        }
+        break;
+    case NOTEQUALS:
+        {
+            if (Integer* lhs_ = dynamic_cast<Integer*>(lhs))
+            {
+                if (Integer* rhs_ = dynamic_cast<Integer*>(rhs))
+                {
+                   std::cout << "Evalutating " << lhs_->value << " != " << rhs_->value << std::endl;
+                   if (lhs_->value != rhs_->value)
+                   {
+                    return true;
+                   }
+                   else
+                   {
+                    return false;
+                   }
+                }
+            }
+        }
+        break;
+    default:
+        {
+            throw std::runtime_error("Somehow there's an invalid operator. This should be impossible");
+            break;
+        }
+    }
+}
+
+
 Node* interpret(Node* node)
 {
     switch (node->getNodeType())
@@ -179,6 +230,19 @@ Node* interpret(Node* node)
             {
                 // Throw proper error here
                 throw std::runtime_error("Identifier exists in current scope: " + fd->id.name);
+            }
+        }
+        break;
+    case IFSTATEMENT:
+        {
+            std::cout << "If statement" << std::endl;
+            IfStatement* if_statement = dynamic_cast<IfStatement*>(node);
+            Condition* condition = dynamic_cast<Condition*>(if_statement->condition);
+
+            if (evaluate(interpret(&condition->lhs), interpret(&condition->rhs), condition->op))
+            {
+                Node* block = dynamic_cast<Node*>(if_statement->block);
+                interpret(block);
             }
         }
         break;

@@ -1,9 +1,6 @@
 var x = 1
-var y = x
+var y = 2
 
-p() {
-	var a = 2
-	var b = a
+if (x != y) {
+	var test = 1
 }
-
-b = 2

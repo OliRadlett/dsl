@@ -13,6 +13,10 @@
 "rank" { return TOKEN(T_DATATYPE); }
 "suit" { return TOKEN(T_DATATYPE); }
 "setup" { return TOKEN(T_SETUP_IDENTIFIER); }
+"if" { return TOKEN(T_IF); }
+"else" { return TOKEN(T_ELSE); }
+"==" { return TOKEN(T_CONDITION_EQUALS); }
+"!=" { return TOKEN(T_CONDITION_NOT_EQUALS); }
 "(" { return TOKEN(T_OPEN_BRACKETS); }
 ")" { return TOKEN(T_CLOSE_BRACKETS); }
 "{" { return TOKEN(T_OPEN_SQUIGGLY); }
