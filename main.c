@@ -241,7 +241,7 @@ Node* interpret(Node* node)
 
             if (evaluate(interpret(&condition->lhs), interpret(&condition->rhs), condition->op))
             {
-                Node* block = dynamic_cast<Node*>(if_statement->block);
+                Node* block = dynamic_cast<Node*>(&if_statement->block);
                 interpret(block);
             }
         }
