@@ -35,20 +35,26 @@ void print_debug_info()
     }
 }
 
-bool identifier_available(std::string name, SymbolTable& currentScope)
+bool identifier_available(std::string name)
 {
-    // Check variables in scope
-    auto iter = currentScope.find(name);
-    if (iter == currentScope.end())
+
+    for (auto& symbolTable : VariableTable)
     {
-        // Check functions
-        auto iter = FunctionTable.find(name);
-        if (iter == FunctionTable.end())
+        auto entryIter = symbolTable.find(name);
+        if (entryIter != symbolTable.end())
         {
-            return true;
+            return false;
         }
     }
-    return false;
+
+    // Check functions
+    auto iter = FunctionTable.find(name);
+    if (iter != FunctionTable.end())
+    {
+        return false;
+    }
+
+    return true;
 }
 
 // void updateVariable(std::string name, Node* value, int depth)
@@ -162,17 +168,35 @@ Node* interpret(Node* node)
             // Here we want to lookup the name in the function and variable tables and if its present we return either a value or a function pointer
             std::cout << "Identifier" << std::endl;
             Identifier* identifier = dynamic_cast<Identifier*>(node);
-            SymbolTable& currentScope = VariableTable.back();
 
-            if (!identifier_available(identifier->name, currentScope))
+            // This might need changing
+            // At the moment functions don't return anything so we only look in variables
+            // What we're doing here is not just checking if the identifier exists but we're returning the value from the correct scope
+            // Need to check if this works in the right order (if a variable x is defined in gobal and function scope and then accessed in function scope does it return the correct value)
+            for (auto& symbolTable : VariableTable)
             {
-                std::cout << "Variable " << identifier->name << " exists in current scope" << std::endl;
-                return currentScope[identifier->name];
+                auto entryIter = symbolTable.find(identifier->name);
+                if (entryIter != symbolTable.end())
+                {
+                    std::cout << "Variable " << identifier->name << " is accessible from current scope" << std::endl;
+                    return symbolTable[identifier->name];
+                }
             }
-            else
-            {
-                std::cout << identifier->name << " doesn't exist in current scope" << std::endl;
-            }
+
+            throw std::runtime_error(identifier->name + " doesn't exist in current scope");
+
+            // SymbolTable& currentScope = VariableTable.back();
+
+
+            // if (!identifier_available(identifier->name))
+            // {
+            //     std::cout << "Variable " << identifier->name << " exists in current scope" << std::endl;
+            //     return currentScope[identifier->name];
+            // }
+            // else
+            // {
+            //     std::cout << identifier->name << " doesn't exist in current scope" << std::endl;
+            // }
         }
         break;
     case VARIABLEDEFINITION:
@@ -182,7 +206,7 @@ Node* interpret(Node* node)
 
             SymbolTable& currentScope = VariableTable.back();
 
-            if (identifier_available(variableDefinition->id.name, currentScope))
+            if (identifier_available(variableDefinition->id.name))
             {
                 Node* assignmentExpr = nullptr;
                 if (variableDefinition->assignmentExpression != nullptr)
@@ -196,15 +220,15 @@ Node* interpret(Node* node)
                     {
                         std::cout << "Variable defined. Identifier:" << variableDefinition->id.name  << " Assignment Expression: " << value->value << std::endl;
                     }
-                    else if (Identifier* value = dynamic_cast<Identifier*>(assignmentExpr))
-                    {
-                        std::cout << "Attempting to assign variable to the value of a variable" << std::endl;
-                        // Do I like this?
-                        Node* n = interpret(assignmentExpr);
-                    }
+                    // else if (Identifier* value = dynamic_cast<Identifier*>(assignmentExpr))
+                    // {
+                    //     std::cout << "Attempting to assign variable to the value of a variable" << std::endl;
+                    //     // Do I like this?
+                    //     Node* n = interpret(assignmentExpr);
+                    // }
                     else
                     {
-                        std::cout << "Something shite happened" << std::endl;
+                        std::cout << "Something shite happened: " << assignmentExpr << std::endl;
                     }
                 }
                 else
@@ -225,25 +249,23 @@ Node* interpret(Node* node)
             std::cout << "ASSIGNMENT" << std::endl;
             Assignment* assignment = dynamic_cast<Assignment*>(node);
             Identifier* lhs = dynamic_cast<Identifier*>(&assignment->lhs);
+            bool successful = false;
 
-            std::cout << "Variable table size: " << VariableTable.size() << std::endl;
-
-            // std::vector<int> availableScope(VariableTable.begin(), VariableTable.begin() + );
-
-            // Need to make sure we only search down from current position
             for (auto& symbolTable : VariableTable)
             {
                 auto entryIter = symbolTable.find(lhs->name);
                 if (entryIter != symbolTable.end())
                 {
                     // Update the value of the entry if found
+                    std::cout << "Updating " << lhs->name << std::endl;
                     entryIter->second = assignment->rhs;
+                    successful = true;
                     break;
                 }
             }
 
-            throw std::runtime_error("Undefined variable: " + lhs->name);
-
+            if (!successful)
+                throw std::runtime_error("Undefined variable: " + lhs->name);
 
             // std::stack<SymbolTable> stackCopy = VariableTable;
             // int depth = 0;
@@ -303,7 +325,7 @@ Node* interpret(Node* node)
         {
             std::cout << "Function definition" << std::endl;
             FunctionDefinition* fd = dynamic_cast<FunctionDefinition*>(node);
-            if (identifier_available(fd->id.name, VariableTable.back()))
+            if (identifier_available(fd->id.name))
             {
                 FunctionTable[fd->id.name] = &fd->block;
                 std::cout << "Identifier: " << fd->id.name << std::endl;
