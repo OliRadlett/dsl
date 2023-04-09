@@ -1,7 +1,7 @@
 #include <string>
 #include <iostream>
 #include <unordered_map>
-#include <stack>
+#include <vector>
 #include <typeinfo>
 #include "main.h"
 #include "ast.h"
@@ -13,7 +13,7 @@ extern int yyparse();
 extern "C" FILE *yyin;
 
 typedef std::unordered_map<std::string, Node*> SymbolTable;
-std::stack<SymbolTable> VariableTableStack;
+std::vector<SymbolTable> VariableTable;
 SymbolTable FunctionTable;
 
 void print_debug_info()
@@ -24,7 +24,7 @@ void print_debug_info()
     {
         std::cout << it->first << std::endl;
     }
-    SymbolTable& currentScope = VariableTableStack.top();
+    SymbolTable& currentScope = VariableTable.back();
     std::cout << "[Global Variable Table]" << std::endl;
     for (auto it = currentScope.begin(); it != currentScope.end(); ++it)
     {
@@ -33,7 +33,6 @@ void print_debug_info()
             std::cout << it->first << ": " << integer->value << std::endl;
         }
     }
-    // Etc for each scope
 }
 
 bool identifier_available(std::string name, SymbolTable& currentScope)
@@ -51,6 +50,25 @@ bool identifier_available(std::string name, SymbolTable& currentScope)
     }
     return false;
 }
+
+// void updateVariable(std::string name, Node* value, int depth)
+// {
+//    std::stack<SymbolTable> stackCopy;
+//    for (int i = depth; i > 1; i--)
+//    {
+//         Node* node = VariableTable.top();
+//         VariableTable.pop();
+//         stackCopy.push(node);
+//    }
+//    VariableTable.top() = new 
+
+//     while (!stackCopy.empty())
+//     {
+//         VariableTable.push(stackCopy.top());
+//         stackCopy.pop();
+//     }
+
+// }
 
 bool evaluate(Node* lhs, Node* rhs, int op)
 {
@@ -123,13 +141,13 @@ Node* interpret(Node* node)
             // Create a new symbol table for this block's scope
             SymbolTable blockScope;
             // Push the symbol table onto the stack
-            VariableTableStack.push(blockScope);
+            VariableTable.push_back(blockScope);
             // Interpret each statement in the block
             for (auto stmt : block->statements) {
                 interpret(stmt);
             }
             // Pop the symbol table off the stack when we leave the block
-            VariableTableStack.pop();
+            VariableTable.pop_back();
         }
         break;
     case INTEGER:
@@ -144,7 +162,7 @@ Node* interpret(Node* node)
             // Here we want to lookup the name in the function and variable tables and if its present we return either a value or a function pointer
             std::cout << "Identifier" << std::endl;
             Identifier* identifier = dynamic_cast<Identifier*>(node);
-            SymbolTable& currentScope = VariableTableStack.top();
+            SymbolTable& currentScope = VariableTable.back();
 
             if (!identifier_available(identifier->name, currentScope))
             {
@@ -162,7 +180,7 @@ Node* interpret(Node* node)
             std::cout << "Variable definition" << std::endl;
             VariableDefinition* variableDefinition = dynamic_cast<VariableDefinition*>(node);
 
-            SymbolTable& currentScope = VariableTableStack.top();
+            SymbolTable& currentScope = VariableTable.back();
 
             if (identifier_available(variableDefinition->id.name, currentScope))
             {
@@ -181,6 +199,7 @@ Node* interpret(Node* node)
                     else if (Identifier* value = dynamic_cast<Identifier*>(assignmentExpr))
                     {
                         std::cout << "Attempting to assign variable to the value of a variable" << std::endl;
+                        // Do I like this?
                         Node* n = interpret(assignmentExpr);
                     }
                     else
@@ -201,11 +220,71 @@ Node* interpret(Node* node)
             }
         }
         break;
+    case ASSIGNMENT:
+        {
+            std::cout << "ASSIGNMENT" << std::endl;
+            Assignment* assignment = dynamic_cast<Assignment*>(node);
+            Identifier* lhs = dynamic_cast<Identifier*>(&assignment->lhs);
+
+            std::cout << "Variable table size: " << VariableTable.size() << std::endl;
+
+            // std::vector<int> availableScope(VariableTable.begin(), VariableTable.begin() + );
+
+            // Need to make sure we only search down from current position
+            for (auto& symbolTable : VariableTable)
+            {
+                auto entryIter = symbolTable.find(lhs->name);
+                if (entryIter != symbolTable.end())
+                {
+                    // Update the value of the entry if found
+                    entryIter->second = assignment->rhs;
+                    break;
+                }
+            }
+
+            throw std::runtime_error("Undefined variable: " + lhs->name);
+
+
+            // std::stack<SymbolTable> stackCopy = VariableTable;
+            // int depth = 0;
+
+            // while (!stackCopy.empty())
+            // {
+            //     if (!identifier_available(lhs->name, stackCopy.top()))
+            //     {
+            //         // Are we type checking or not?
+            //         std::cout << lhs->name << " is available for assignment at scope depth " << stackCopy.size() << std::endl;
+            //         updateVariable(lhs->name, assignment->rhs, depth);
+
+            //         // Do I like this?
+            //         // currentScope[lhs->name] = assignment->rhs;
+            //         // if (Integer* rhs = dynamic_cast<Integer*>(assignment->rhs))
+            //         // {
+            //         //     currentScope[lhs->name] = rhs;
+            //         // }
+            //     }
+            //     depth++;
+            //     stackCopy.pop();
+            // }
+        }
+        break;
     case FUNCTIONCALL:
         {
             std::cout << "Function call" << std::endl;
             FunctionCall* call = dynamic_cast<FunctionCall*>(node);
             std::cout << "Identifier: " << call->id.name << std::endl;
+
+            // if (FunctionTable.find(call->id.name) != functionTable.end())
+            // {
+
+            // }
+
+            Node* function = FunctionTable[call->id.name];
+            if (function != nullptr)
+            {
+                interpret(function);
+            }
+
             // TODO Retrieve function from FunctionTable and run this on it's Block
             // Block* block = &fd->block;
             // for (auto stmt : block->statements) {
@@ -224,7 +303,7 @@ Node* interpret(Node* node)
         {
             std::cout << "Function definition" << std::endl;
             FunctionDefinition* fd = dynamic_cast<FunctionDefinition*>(node);
-            if (identifier_available(fd->id.name, VariableTableStack.top()))
+            if (identifier_available(fd->id.name, VariableTable.back()))
             {
                 FunctionTable[fd->id.name] = &fd->block;
                 std::cout << "Identifier: " << fd->id.name << std::endl;
@@ -272,7 +351,7 @@ int main(int argc, char **argv)
 
     // Create global scope
     SymbolTable globalScope;
-    VariableTableStack.push(globalScope);
+    VariableTable.push_back(globalScope);
 
     std::cout << "Root node address: " << programBlock <<  std::endl;
 

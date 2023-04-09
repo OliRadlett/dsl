@@ -62,6 +62,8 @@ numeric : T_INTEGER { $$ = new Integer(atol($1->c_str())); delete $1; }
 
 expression: identifier { $<identifier>$ = $1; }
      | numeric
+     | identifier T_EQUALS identifier { $$ = new Assignment(*$1, $3); }
+    	| identifier T_EQUALS expression { $$ = new Assignment(*$1, $3); }
      | identifier T_OPEN_BRACKETS T_CLOSE_BRACKETS { $$ = new FunctionCall(*$1); }
 
 block : T_OPEN_SQUIGGLY statements T_CLOSE_SQUIGGLY { $$ = $2; }

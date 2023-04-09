@@ -1,6 +1,9 @@
-var x = 1
-var y = 2
+var z = 1
 
-if (x != y) {
-	var test = 1
+y() {
+	var x = 2
 }
+
+x = 1
+
+y()

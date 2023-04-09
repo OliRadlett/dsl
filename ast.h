@@ -7,7 +7,7 @@ class Expression;
 
 typedef std::vector<Statement*> StatementList;
 typedef std::vector<Expression*> ExpressionList;
-typedef enum {NODE, EXPRESSION, STATEMENT, BLOCK, INTEGER, IDENTIFIER, VARIABLEDEFINITION, FUNCTIONDEFINITION, SPECIALFUNCTIONDEFINITION, FUNCTIONCALL, EXPRESSIONSTATEMENT, IFSTATEMENT, CONDITION} type;
+typedef enum {NODE, EXPRESSION, STATEMENT, BLOCK, INTEGER, IDENTIFIER, VARIABLEDEFINITION, FUNCTIONDEFINITION, SPECIALFUNCTIONDEFINITION, FUNCTIONCALL, EXPRESSIONSTATEMENT, IFSTATEMENT, CONDITION, ASSIGNMENT} type;
 typedef enum {EQUALS, NOTEQUALS} operator_type;
 
 
@@ -61,6 +61,13 @@ public:
 	Condition(Identifier& lhs, Identifier& rhs, int op) : lhs(lhs), rhs(rhs), op(op) {};
 };
 
+class Assignment : public Expression {
+public:
+	const int getNodeType() const override { return ASSIGNMENT; }
+	Identifier& lhs;
+	Expression *rhs;
+	Assignment(Identifier& lhs, Expression *rhs) : lhs(lhs), rhs(rhs) {};
+};
 
 class ExpressionStatement : public Statement {
 public:
