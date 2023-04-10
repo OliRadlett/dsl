@@ -37,18 +37,15 @@ void print_debug_info()
 
 bool identifier_available(std::string name)
 {
-
-    for (auto& symbolTable : VariableTable)
+    SymbolTable scope = VariableTable.back();
+    auto iter = scope.find(name);
+    if (iter != scope.end())
     {
-        auto entryIter = symbolTable.find(name);
-        if (entryIter != symbolTable.end())
-        {
-            return false;
-        }
+        return false;
     }
 
     // Check functions
-    auto iter = FunctionTable.find(name);
+    iter = FunctionTable.find(name);
     if (iter != FunctionTable.end())
     {
         return false;
@@ -56,25 +53,6 @@ bool identifier_available(std::string name)
 
     return true;
 }
-
-// void updateVariable(std::string name, Node* value, int depth)
-// {
-//    std::stack<SymbolTable> stackCopy;
-//    for (int i = depth; i > 1; i--)
-//    {
-//         Node* node = VariableTable.top();
-//         VariableTable.pop();
-//         stackCopy.push(node);
-//    }
-//    VariableTable.top() = new 
-
-//     while (!stackCopy.empty())
-//     {
-//         VariableTable.push(stackCopy.top());
-//         stackCopy.pop();
-//     }
-
-// }
 
 bool evaluate(Node* lhs, Node* rhs, int op)
 {
@@ -173,8 +151,9 @@ Node* interpret(Node* node)
             // At the moment functions don't return anything so we only look in variables
             // What we're doing here is not just checking if the identifier exists but we're returning the value from the correct scope
             // Need to check if this works in the right order (if a variable x is defined in gobal and function scope and then accessed in function scope does it return the correct value)
-            for (auto& symbolTable : VariableTable)
+            for (auto i = VariableTable.rbegin(); i != VariableTable.rend(); i++)
             {
+                SymbolTable& symbolTable = *i;
                 auto entryIter = symbolTable.find(identifier->name);
                 if (entryIter != symbolTable.end())
                 {
@@ -183,20 +162,9 @@ Node* interpret(Node* node)
                 }
             }
 
+            // return nullptr;
+
             throw std::runtime_error(identifier->name + " doesn't exist in current scope");
-
-            // SymbolTable& currentScope = VariableTable.back();
-
-
-            // if (!identifier_available(identifier->name))
-            // {
-            //     std::cout << "Variable " << identifier->name << " exists in current scope" << std::endl;
-            //     return currentScope[identifier->name];
-            // }
-            // else
-            // {
-            //     std::cout << identifier->name << " doesn't exist in current scope" << std::endl;
-            // }
         }
         break;
     case VARIABLEDEFINITION:
@@ -220,12 +188,6 @@ Node* interpret(Node* node)
                     {
                         std::cout << "Variable defined. Identifier:" << variableDefinition->id.name  << " Assignment Expression: " << value->value << std::endl;
                     }
-                    // else if (Identifier* value = dynamic_cast<Identifier*>(assignmentExpr))
-                    // {
-                    //     std::cout << "Attempting to assign variable to the value of a variable" << std::endl;
-                    //     // Do I like this?
-                    //     Node* n = interpret(assignmentExpr);
-                    // }
                     else
                     {
                         std::cout << "Something shite happened: " << assignmentExpr << std::endl;
@@ -251,8 +213,10 @@ Node* interpret(Node* node)
             Identifier* lhs = dynamic_cast<Identifier*>(&assignment->lhs);
             bool successful = false;
 
-            for (auto& symbolTable : VariableTable)
+            // Search backwards
+            for (auto i = VariableTable.rbegin(); i != VariableTable.rend(); i++)
             {
+                SymbolTable& symbolTable = *i;
                 auto entryIter = symbolTable.find(lhs->name);
                 if (entryIter != symbolTable.end())
                 {
