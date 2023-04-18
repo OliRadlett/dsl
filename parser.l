@@ -8,7 +8,7 @@
 %}
 
 %%
-[ \t\n];
+[ \t\r\n]+ {}
 "var" { return TOKEN(T_VARIABLE_DEFINITION); }
 "rank" { return TOKEN(T_DATATYPE); }
 "suit" { return TOKEN(T_DATATYPE); }
