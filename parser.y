@@ -10,6 +10,7 @@ int yylex();
 void yyerror(const char *s) { printf("ERROR: %s\n", s); }
 %}
 
+%error-verbose
 %define parse.trace
 
 %union {
