@@ -147,6 +147,13 @@ Node* interpret(Node* node)
             std::cout << "Identifier" << std::endl;
             Identifier* identifier = dynamic_cast<Identifier*>(node);
 
+            // If our identifier is actually an interger we skip the lookup and just return the value
+            if (Integer* value = dynamic_cast<Integer*>(identifier))
+            {
+                std::cout << "Found integer: " << value->value << std::endl;
+                return value;
+            }
+
             // This might need changing
             // At the moment functions don't return anything so we only look in variables
             // What we're doing here is not just checking if the identifier exists but we're returning the value from the correct scope
@@ -338,6 +345,11 @@ int main(int argc, char **argv)
     // Create global scope
     SymbolTable globalScope;
     VariableTable.push_back(globalScope);
+
+    if (programBlock == nullptr)
+    {
+        throw std::runtime_error("AST not formed");
+    }
 
     std::cout << "Root node address: " << programBlock <<  std::endl;
 

@@ -28,7 +28,7 @@ void yyerror(const char *s) { printf("ERROR: %s\n", s); }
 %token <string> T_VARIABLE_DEFINITION T_DATATYPE T_SETUP_IDENTIFIER T_INTEGER T_IDENTIFIER T_IF T_ELSE
 %token <token> T_OPEN_BRACKETS T_CLOSE_BRACKETS T_OPEN_SQUIGGLY  T_CLOSE_SQUIGGLY T_COLON T_COMMA T_EQUALS T_OPEN_SQUARE T_CLOSE_SQUARE T_CONDITION_EQUALS T_CONDITION_NOT_EQUALS
 
-%type <identifier> identifier
+%type <identifier> identifier condition_identifier
 %type <condition> condition
 %type <expression> numeric expression
 %type <block> program statements block
@@ -53,7 +53,9 @@ function_definition: identifier T_OPEN_BRACKETS T_CLOSE_BRACKETS block { $$ = ne
 
 if: T_IF T_OPEN_BRACKETS condition T_CLOSE_BRACKETS block { $$ = new IfStatement($3, *$5); }
 
-condition: identifier operator identifier { $$ = new Condition(*$1, *$3, $2); }
+condition_identifier: identifier | numeric
+
+condition: condition_identifier operator condition_identifier { $$ = new Condition(*$1, *$3, $2); }
 
 operator: T_CONDITION_EQUALS { $$ = 0; } | T_CONDITION_NOT_EQUALS { $$ = 1; }
 
