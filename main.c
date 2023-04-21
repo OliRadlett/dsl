@@ -19,6 +19,17 @@ SymbolTable FunctionTable;
 
 Node* interpret(Node* node);
 
+bool debug = false;
+
+template<typename T>
+void print(const T& value)
+{
+    if (debug)
+    {
+        std::cout << value << std::endl;
+    }
+}
+
 std::string pprint_list(std::vector<Integer> vector)
 {
     if (vector.empty()) {
@@ -113,7 +124,7 @@ bool evaluate(Node* lhs, Node* rhs, int op)
             {
                 if (Integer* rhs_ = dynamic_cast<Integer*>(rhs))
                 {
-                   std::cout << "Evalutating " << lhs_->value << " == " << rhs_->value << std::endl;
+                   print("Evalutating " + std::to_string(lhs_->value) + " == " + std::to_string(rhs_->value));
                    if (lhs_->value == rhs_->value)
                    {
                     return true;
@@ -132,7 +143,7 @@ bool evaluate(Node* lhs, Node* rhs, int op)
             {
                 if (Integer* rhs_ = dynamic_cast<Integer*>(rhs))
                 {
-                   std::cout << "Evalutating " << lhs_->value << " != " << rhs_->value << std::endl;
+                   print("Evalutating " + std::to_string(lhs_->value) + " != " + std::to_string(rhs_->value));
                    if (lhs_->value != rhs_->value)
                    {
                     return true;
@@ -158,17 +169,17 @@ Node* interpret(Node* node)
     switch (node->getNodeType())
     {
     case NODE:
-        std::cout << "Node" << std::endl;
+        print("Node");
         break;
     case EXPRESSION:
-        std::cout << "Expression" << std::endl;
+        print("Expression");
         break;
     case STATEMENT:
-        std::cout << "Statement" << std::endl;
+        print("Statement");
         break;
     case BLOCK:
         {
-            std::cout << "Block" << std::endl;
+            print("Block");
             Block* block = dynamic_cast<Block*>(node);
             // Create a new symbol table for this block's scope
             SymbolTable blockScope;
@@ -180,7 +191,7 @@ Node* interpret(Node* node)
             {
                 for (size_t i = 0; i < block->parameter_names.size(); i++)
                 {
-                    std::cout << "Adding " << block->parameter_names[i] << " with value " << block->parameters_expressions[i] << " to function scope" << std::endl;
+                    print("Adding " + block->parameter_names[i] + " to function scope");
                     blockScope[block->parameter_names[i]] = interpret(block->parameters_expressions[i]);
                 }
             }
@@ -197,7 +208,7 @@ Node* interpret(Node* node)
         break;
     case INTEGER:
         {
-            std::cout << "Integer" << std::endl;
+            print("Integer");
             Integer* integer = dynamic_cast<Integer*>(node);
             return integer;
         }
@@ -205,13 +216,13 @@ Node* interpret(Node* node)
     case IDENTIFIER:
         {
             // Here we want to lookup the name in the function and variable tables and if its present we return either a value or a function pointer
-            std::cout << "Identifier" << std::endl;
+            print("Identifier");
             Identifier* identifier = dynamic_cast<Identifier*>(node);
 
             // If our identifier is actually an interger we skip the lookup and just return the value
             if (Integer* value = dynamic_cast<Integer*>(identifier))
             {
-                std::cout << "Found integer: " << value->value << std::endl;
+                print("Found integer: " + std::to_string(value->value));
                 return value;
             }
 
@@ -225,7 +236,7 @@ Node* interpret(Node* node)
                 auto entryIter = symbolTable.find(identifier->name);
                 if (entryIter != symbolTable.end())
                 {
-                    std::cout << "Variable " << identifier->name << " is accessible from current scope" << std::endl;
+                    print("Variable " + identifier->name + " is accessible from current scope");
                     return symbolTable[identifier->name];
                 }
             }
@@ -237,7 +248,7 @@ Node* interpret(Node* node)
         break;
     case VARIABLEDEFINITION:
         {
-            std::cout << "Variable definition" << std::endl;
+            print("Variable definition");
             VariableDefinition* variableDefinition = dynamic_cast<VariableDefinition*>(node);
 
             SymbolTable& currentScope = VariableTable.back();
@@ -254,20 +265,21 @@ Node* interpret(Node* node)
 
                     if (Integer* value = dynamic_cast<Integer*>(assignmentExpr))
                     {
-                        std::cout << "Variable defined. Identifier:" << variableDefinition->id.name  << " Assignment Expression: " << value->value << std::endl;
+                        print("Variable defined. Identifier: " + variableDefinition->id.name  + " Assignment Expression: " + std::to_string(value->value));
                     }
                     else if (List* value = dynamic_cast<List*>(assignmentExpr))
                     {
-                        std::cout << "Variable defined. Identifier:" << variableDefinition->id.name  << " Assignment Expression: " << pprint_list(value->values) << std::endl;
+                        print("Variable defined. Identifier: " + variableDefinition->id.name  + " Assignment Expression: " + pprint_list(value->values));;
                     }
                     else
                     {
-                        std::cout << "Something shite happened: " << assignmentExpr << std::endl;
+                        print("Something shite happened: ");
+                        print(assignmentExpr);
                     }
                 }
                 else
                 {
-                    std::cout << "Identifier: " << variableDefinition->id.name << " (no assignment expression)" << std::endl;
+                    print("Identifier: " + variableDefinition->id.name + " (no assignment expression)");
                 }
                 // Add the variable to the current scope's symbol table
                 currentScope[variableDefinition->id.name] = assignmentExpr;
@@ -280,7 +292,7 @@ Node* interpret(Node* node)
         break;
     case ASSIGNMENT:
         {
-            std::cout << "ASSIGNMENT" << std::endl;
+            print("ASSIGNMENT");
             Assignment* assignment = dynamic_cast<Assignment*>(node);
             Identifier* lhs = dynamic_cast<Identifier*>(&assignment->lhs);
             bool successful = false;
@@ -293,7 +305,7 @@ Node* interpret(Node* node)
                 if (entryIter != symbolTable.end())
                 {
                     // Update the value of the entry if found
-                    std::cout << "Updating " << lhs->name << std::endl;
+                    print("Updating " + lhs->name);
                     entryIter->second = assignment->rhs;
                     successful = true;
                     break;
@@ -302,39 +314,17 @@ Node* interpret(Node* node)
 
             if (!successful)
                 throw std::runtime_error("Undefined variable: " + lhs->name);
-
-            // std::stack<SymbolTable> stackCopy = VariableTable;
-            // int depth = 0;
-
-            // while (!stackCopy.empty())
-            // {
-            //     if (!identifier_available(lhs->name, stackCopy.top()))
-            //     {
-            //         // Are we type checking or not?
-            //         std::cout << lhs->name << " is available for assignment at scope depth " << stackCopy.size() << std::endl;
-            //         updateVariable(lhs->name, assignment->rhs, depth);
-
-            //         // Do I like this?
-            //         // currentScope[lhs->name] = assignment->rhs;
-            //         // if (Integer* rhs = dynamic_cast<Integer*>(assignment->rhs))
-            //         // {
-            //         //     currentScope[lhs->name] = rhs;
-            //         // }
-            //     }
-            //     depth++;
-            //     stackCopy.pop();
-            // }
         }
         break;
     case FUNCTIONCALL:
         {
-            std::cout << "Function call" << std::endl;
+            print("Function call");
             FunctionCall* call = dynamic_cast<FunctionCall*>(node);
             Block* function = dynamic_cast<Block*>(FunctionTable[call->id.name]);
-            std::cout << "Identifier: " << call->id.name;
+            print("Identifier: " + call->id.name);
             if (!call->parameters.empty())
             {
-                std::cout << " Parameters: " << pprint_list(call->parameters);
+                print("Parameters: " + pprint_list(call->parameters));
                 function->parameters_expressions = call->parameters;
             }
             std::cout << std::endl;
@@ -353,21 +343,21 @@ Node* interpret(Node* node)
         break;
     case EXPRESSIONSTATEMENT:
         {
-        std::cout << "Expression statement" << std::endl;
-        ExpressionStatement* e = dynamic_cast<ExpressionStatement*>(node);
-        return interpret(&e->expression);
+            print("Expression statement");
+            ExpressionStatement* e = dynamic_cast<ExpressionStatement*>(node);
+            return interpret(&e->expression);
         }
         break;
     case FUNCTIONDEFINITION:
         {
-            std::cout << "Function definition" << std::endl;
+            print("Function definition");
             FunctionDefinition* fd = dynamic_cast<FunctionDefinition*>(node);
             if (identifier_available(fd->id.name))
             {
-                std::cout << "Identifier: " << fd->id.name;
+                print("Identifier: " + fd->id.name);
                 if (!fd->parameters.empty())
                 {
-                    std::cout << " Parameters: " << pprint_list(fd->parameters);
+                    print("Parameters: " + pprint_list(fd->parameters));
 
                     std::vector<std::string> parameter_names;
 
@@ -393,7 +383,7 @@ Node* interpret(Node* node)
         break;
     case IFSTATEMENT:
         {
-            std::cout << "If statement" << std::endl;
+            print("If statement");
             IfStatement* if_statement = dynamic_cast<IfStatement*>(node);
             Condition* condition = dynamic_cast<Condition*>(if_statement->condition);
 
@@ -406,28 +396,51 @@ Node* interpret(Node* node)
         break;
     case LIST:
         {
-            std::cout << "List" << std::endl;
+            print("List");
             List* list = dynamic_cast<List*>(node);
             return list;
         }
         break;
     default:
-        std::cout << "Unknown node type: " << node->getNodeType() << std::endl;
+        print("Unknown node type: " + node->getNodeType());
         break;
     }
 }
 
 int main(int argc, char **argv)
 {
-    if(argc > 1){
-      yyin = fopen(argv[1], "r");
-      printf("Parsing from file\n");
+
+    bool file = false;
+    const char* sourcePath;
+
+    for (int i = 1; i < argc; i++)
+    {
+        if (std::string(argv[i]) == "-d" || std::string(argv[i]) == "--debug")
+        {
+            debug = true;
+        }
+        else if (std::string(argv[i]) == "-f" || std::string(argv[i]) == "--file")
+        {
+            file = true;
+            sourcePath = argv[i + 1];
+            i++; // Skip next paramater
+        }
+    }
+
+    if(file)
+    {
+        yyin = fopen(sourcePath, "r");
+        print("Parsing from file");
     }
     else
     {
-        
-      yyin = stdin;
-      printf("Parsing from stdin\n");
+        yyin = stdin;
+        print("Parsing from stdin");
+    }
+
+    if (debug)
+    {
+        print("Running in debug mode");
     }
 
     yyparse();
@@ -441,7 +454,9 @@ int main(int argc, char **argv)
         throw std::runtime_error("AST not formed");
     }
 
-    std::cout << "Root node address: " << programBlock <<  std::endl;
+    // Have to print these seperately because there is no nice way to concaternate string and pointer address
+    print("Root node address: ");
+    print(programBlock);
 
     for (auto statement : programBlock->statements)
     {
@@ -449,7 +464,10 @@ int main(int argc, char **argv)
         interpret(statement);
     }
 
-    print_debug_info();
+    if (debug)
+    {
+        print_debug_info();
+    }
 
     return 0;
 }
