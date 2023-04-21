@@ -18,7 +18,8 @@ isequal(var i, var ii) {
 
 	if (i == ii) {
 
-		a = 10
+		print(i)
+		print(2)
 
 	}
 

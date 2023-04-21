@@ -12,7 +12,12 @@
 "var" { return TOKEN(T_VARIABLE_DEFINITION); }
 "rank" { return TOKEN(T_DATATYPE); }
 "suit" { return TOKEN(T_DATATYPE); }
-"setup" { return TOKEN(T_SETUP_IDENTIFIER); }
+"setup" { return TOKEN(T_SPECIAL_FUNCTION_SETUP); }
+"lead" { return TOKEN(T_SPECIAL_FUNCTION_LEAD); }
+"follow" { return TOKEN(T_SPECIAL_FUNCTION_FOLLOW); }
+"score" { return TOKEN(T_SPECIAL_FUNCTION_SCORE); }
+"print" { return TOKEN(T_LIBRARY_FUNCTION_PRINT); }
+"countif" { return TOKEN(T_LIBRARY_FUNCTION_COUNTIF); }
 "if" { return TOKEN(T_IF); }
 "else" { return TOKEN(T_ELSE); }
 "==" { return TOKEN(T_CONDITION_EQUALS); }

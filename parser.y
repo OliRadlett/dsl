@@ -32,14 +32,14 @@ void yyerror(const char *s) { printf("ERROR: %s\n", s); }
 	int token;
 }
 
-%token <string> T_VARIABLE_DEFINITION T_DATATYPE T_SETUP_IDENTIFIER T_INTEGER T_IDENTIFIER T_IF T_ELSE
+%token <string> T_VARIABLE_DEFINITION T_DATATYPE T_INTEGER T_IDENTIFIER T_IF T_ELSE T_SPECIAL_FUNCTION_SETUP T_SPECIAL_FUNCTION_LEAD T_SPECIAL_FUNCTION_FOLLOW T_SPECIAL_FUNCTION_SCORE T_LIBRARY_FUNCTION_PRINT T_LIBRARY_FUNCTION_COUNTIF
 %token <token> T_OPEN_BRACKETS T_CLOSE_BRACKETS T_OPEN_SQUIGGLY  T_CLOSE_SQUIGGLY T_COLON T_COMMA T_EQUALS T_OPEN_SQUARE T_CLOSE_SQUARE T_CONDITION_EQUALS T_CONDITION_NOT_EQUALS
 
 %type <identifier> identifier condition_identifier
 %type <condition> condition
-%type <expression> numeric expression
+%type <expression> numeric expression special_function
 %type <block> program statements block
-%type <statement> statement variable_definition function_definition if
+%type <statement> statement variable_definition function_definition if library_function
 %type <token> operator
 %type <variable_definition_vector> function_definition_args
 %type <expression_vector> function_call_args
@@ -56,7 +56,7 @@ program: statements { programBlock = $1; };
 statements: statement { $$ = new Block(); $$->statements.push_back($<statement>1); }
  			| statements statement { $1->statements.push_back($<statement>2); };
 
-statement: variable_definition | function_definition | if | expression { $$ = new ExpressionStatement(*$1); };
+statement: variable_definition | function_definition | if | library_function | expression { $$ = new ExpressionStatement(*$1); };
 
 variable_definition: T_VARIABLE_DEFINITION identifier { $$ = new VariableDefinition(*$2); }
 					| T_VARIABLE_DEFINITION identifier T_EQUALS expression { $$ = new VariableDefinition(*$2, $4); }
@@ -99,6 +99,7 @@ function_call_args: { $$ = new ExpressionList(); }
 expression: identifier { $<identifier>$ = $1; }
      | numeric
      | list
+     | special_function {}
      | identifier T_EQUALS identifier { $$ = new Assignment(*$1, $3); }
      | identifier T_EQUALS expression { $$ = new Assignment(*$1, $3); }
      | identifier T_OPEN_BRACKETS T_CLOSE_BRACKETS { $$ = new FunctionCall(*$1); }
@@ -106,6 +107,11 @@ expression: identifier { $<identifier>$ = $1; }
 
 block : T_OPEN_SQUIGGLY statements T_CLOSE_SQUIGGLY { $$ = $2; }
       | T_OPEN_SQUIGGLY T_CLOSE_SQUIGGLY { $$ = new Block(); }
+
+special_function: {}
+
+library_function: T_LIBRARY_FUNCTION_PRINT T_OPEN_BRACKETS function_call_args T_CLOSE_BRACKETS { $$ = new LibraryFunction(0, *$3); }
+			| T_LIBRARY_FUNCTION_COUNTIF T_OPEN_BRACKETS function_call_args T_CLOSE_BRACKETS { $$ = new LibraryFunction(1, *$3); }
 
 
 %%

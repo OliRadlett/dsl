@@ -164,6 +164,30 @@ bool evaluate(Node* lhs, Node* rhs, int op)
     }
 }
 
+void library_print(ExpressionList& parameters)
+{
+    if (parameters.size() > 1)
+    {
+        throw std::runtime_error("Error: print only takes one parameter");
+    }
+    else
+    {
+        // Print only takes one parameter
+        Node* toPrint = interpret(parameters[0]);
+
+        if (Integer* value = dynamic_cast<Integer*>(toPrint))
+        {
+            print("Printing integer");
+            std::cout << value->value << std::endl;
+        }
+        else if (List* value = dynamic_cast<List*>(toPrint))
+        {
+            print("Printing list");
+            std::cout << pprint_list(value->values) << std::endl;
+        }
+    }
+}
+
 Node* interpret(Node* node)
 {
     switch (node->getNodeType())
@@ -401,6 +425,29 @@ Node* interpret(Node* node)
             return list;
         }
         break;
+    case LIBRARYFUNCTION:
+        {
+            print("Library function");
+            LibraryFunction* function = dynamic_cast<LibraryFunction*>(node);
+            switch (function->type)
+            {
+                case PRINT:
+                    {
+                        print("Print library function");
+                        library_print(function->parameters);
+                        break;
+                    }
+                case COUNTIF:
+                    {
+                        print("Countif library function");
+                        break;
+                    }
+                default:
+                    print("Unknown library function");
+                    break;
+            }
+        }
+        break;
     default:
         print("Unknown node type: " + node->getNodeType());
         break;
@@ -451,7 +498,7 @@ int main(int argc, char **argv)
 
     if (programBlock == nullptr)
     {
-        throw std::runtime_error("AST not formed");
+            throw std::runtime_error("AST not formed");
     }
 
     // Have to print these seperately because there is no nice way to concaternate string and pointer address
