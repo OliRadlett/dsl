@@ -18,8 +18,7 @@ isequal(var i, var ii) {
 
 	if (i == ii) {
 
-		print(i)
-		print(2)
+		print("Equal!")
 
 	}
 
@@ -31,3 +30,7 @@ isequal(i, ii)
 
 
 var test = [1, 2, 3, 4]
+print(test)
+var p = "test"
+print(p)
+print("TEST!")

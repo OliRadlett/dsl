@@ -31,6 +31,7 @@
 "=" { return TOKEN(T_EQUALS); }
 "[" { return TOKEN(T_OPEN_SQUARE); }
 "]" { return TOKEN(T_CLOSE_SQUARE); }
+\"[^\"\n]*\"   { SAVE_TOKEN; return T_STRING; }
 [0-9]+ { SAVE_TOKEN; return T_INTEGER; }
 [a-zA-Z]+ { SAVE_TOKEN; return T_IDENTIFIER; }
 

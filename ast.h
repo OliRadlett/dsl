@@ -9,7 +9,7 @@ class VariableDefinition;
 typedef std::vector<Statement*> StatementList;
 typedef std::vector<Expression*> ExpressionList;
 typedef std::vector<VariableDefinition*> VariableList;
-typedef enum {NODE, EXPRESSION, STATEMENT, BLOCK, INTEGER, LIST, IDENTIFIER, VARIABLEDEFINITION, FUNCTIONDEFINITION, SPECIALFUNCTIONDEFINITION, LIBRARYFUNCTION, FUNCTIONCALL, EXPRESSIONSTATEMENT, IFSTATEMENT, CONDITION, ASSIGNMENT} type;
+typedef enum {NODE, EXPRESSION, STATEMENT, BLOCK, INTEGER, STRING, LIST, IDENTIFIER, VARIABLEDEFINITION, FUNCTIONDEFINITION, SPECIALFUNCTIONDEFINITION, LIBRARYFUNCTION, FUNCTIONCALL, EXPRESSIONSTATEMENT, IFSTATEMENT, CONDITION, ASSIGNMENT} type;
 typedef enum {EQUALS, NOTEQUALS} operator_type;
 typedef enum {SETUP, LEAD, FOLLOW, SCORE} special_function;
 typedef enum {PRINT, COUNTIF} library_function;
@@ -42,6 +42,14 @@ public:
 	int value;
 	Integer(int value) : value(value) {}
 };
+
+class String : public Expression {
+public:
+	const int getNodeType() const override { return STRING; }
+	std::string value;
+	String(std::string value) : value(value) {}
+};
+
 
 class Vector {
 public:

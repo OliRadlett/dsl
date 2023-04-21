@@ -92,6 +92,10 @@ void print_debug_info()
         {
             std::cout << it->first << ": " << pprint_list(list->values) << std::endl;
         }
+        else if (String* string = dynamic_cast<String*>(it->second))
+        {
+            std::cout << it->first << ": " << string->value << std::endl;
+        }
     }
 }
 
@@ -159,9 +163,10 @@ bool evaluate(Node* lhs, Node* rhs, int op)
     default:
         {
             throw std::runtime_error("Somehow there's an invalid operator. This should be impossible");
-            break;
         }
+        break;
     }
+    throw std::runtime_error("Somehow condition is neither true or false. This should be impossible");
 }
 
 void library_print(ExpressionList& parameters)
@@ -184,6 +189,11 @@ void library_print(ExpressionList& parameters)
         {
             print("Printing list");
             std::cout << pprint_list(value->values) << std::endl;
+        }
+        else if (String* value = dynamic_cast<String*>(toPrint))
+        {
+            print("Printing string");
+            std::cout << value->value << std::endl;
         }
     }
 }
@@ -248,6 +258,14 @@ Node* interpret(Node* node)
             {
                 print("Found integer: " + std::to_string(value->value));
                 return value;
+            } else if (List* value = dynamic_cast<List*>(identifier))
+            {
+                print("Found list: " + pprint_list(value->values));
+                return value;
+            } else if (String* value = dynamic_cast<String*>(identifier))
+            {
+                print("Found string: " + value->value);
+                return value;
             }
 
             // This might need changing
@@ -293,7 +311,11 @@ Node* interpret(Node* node)
                     }
                     else if (List* value = dynamic_cast<List*>(assignmentExpr))
                     {
-                        print("Variable defined. Identifier: " + variableDefinition->id.name  + " Assignment Expression: " + pprint_list(value->values));;
+                        print("Variable defined. Identifier: " + variableDefinition->id.name  + " Assignment Expression: " + pprint_list(value->values));
+                    }
+                    else if (String* value = dynamic_cast<String*>(assignmentExpr))
+                    {
+                        print("Variable defined. Identifier: " + variableDefinition->id.name  + " Assignment Expression: " + value->value);
                     }
                     else
                     {
@@ -425,6 +447,13 @@ Node* interpret(Node* node)
             return list;
         }
         break;
+    case STRING:
+        {
+            print("String");
+            String* string = dynamic_cast<String*>(node);
+            return string;
+        }
+        break;
     case LIBRARYFUNCTION:
         {
             print("Library function");
@@ -452,6 +481,7 @@ Node* interpret(Node* node)
         print("Unknown node type: " + node->getNodeType());
         break;
     }
+    return nullptr;
 }
 
 int main(int argc, char **argv)

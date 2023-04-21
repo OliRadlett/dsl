@@ -21,6 +21,7 @@ void yyerror(const char *s) { printf("ERROR: %s\n", s); }
 	Expression *expression;
 	Statement *statement;
 	Identifier *identifier;
+	String *string_;
 	Condition *condition;
 	VariableDefinition *variable_definition;
 	std::vector<VariableDefinition*> *variable_definition_vector;
@@ -32,10 +33,11 @@ void yyerror(const char *s) { printf("ERROR: %s\n", s); }
 	int token;
 }
 
-%token <string> T_VARIABLE_DEFINITION T_DATATYPE T_INTEGER T_IDENTIFIER T_IF T_ELSE T_SPECIAL_FUNCTION_SETUP T_SPECIAL_FUNCTION_LEAD T_SPECIAL_FUNCTION_FOLLOW T_SPECIAL_FUNCTION_SCORE T_LIBRARY_FUNCTION_PRINT T_LIBRARY_FUNCTION_COUNTIF
+%token <string> T_VARIABLE_DEFINITION T_DATATYPE T_INTEGER T_IDENTIFIER T_IF T_ELSE T_SPECIAL_FUNCTION_SETUP T_SPECIAL_FUNCTION_LEAD T_SPECIAL_FUNCTION_FOLLOW T_SPECIAL_FUNCTION_SCORE T_LIBRARY_FUNCTION_PRINT T_LIBRARY_FUNCTION_COUNTIF T_STRING
 %token <token> T_OPEN_BRACKETS T_CLOSE_BRACKETS T_OPEN_SQUIGGLY  T_CLOSE_SQUIGGLY T_COLON T_COMMA T_EQUALS T_OPEN_SQUARE T_CLOSE_SQUARE T_CONDITION_EQUALS T_CONDITION_NOT_EQUALS
 
 %type <identifier> identifier condition_identifier
+%type <string_> string
 %type <condition> condition
 %type <expression> numeric expression special_function
 %type <block> program statements block
@@ -81,6 +83,7 @@ identifier: T_IDENTIFIER { $$ = new Identifier(*$1); delete $1; }
 
 numeric: T_INTEGER { $$ = new Integer(atol($1->c_str())); delete $1; }
 
+string: T_STRING { $$ = new String(*$1); delete $1; }
 
 list: T_OPEN_SQUARE T_CLOSE_SQUARE { $$ = new List(); }
     | T_OPEN_SQUARE list_items T_CLOSE_SQUARE { $$ = new List($2); }
@@ -99,6 +102,7 @@ function_call_args: { $$ = new ExpressionList(); }
 expression: identifier { $<identifier>$ = $1; }
      | numeric
      | list
+     | string { $<string_>$ = $1; }
      | special_function {}
      | identifier T_EQUALS identifier { $$ = new Assignment(*$1, $3); }
      | identifier T_EQUALS expression { $$ = new Assignment(*$1, $3); }
