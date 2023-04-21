@@ -4,10 +4,12 @@
 
 class Statement;
 class Expression;
+class VariableDefinition;
 
 typedef std::vector<Statement*> StatementList;
 typedef std::vector<Expression*> ExpressionList;
-typedef enum {NODE, EXPRESSION, STATEMENT, BLOCK, INTEGER, IDENTIFIER, VARIABLEDEFINITION, FUNCTIONDEFINITION, SPECIALFUNCTIONDEFINITION, FUNCTIONCALL, EXPRESSIONSTATEMENT, IFSTATEMENT, CONDITION, ASSIGNMENT} type;
+typedef std::vector<VariableDefinition*> VariableList;
+typedef enum {NODE, EXPRESSION, STATEMENT, BLOCK, INTEGER, LIST, IDENTIFIER, VARIABLEDEFINITION, FUNCTIONDEFINITION, SPECIALFUNCTIONDEFINITION, FUNCTIONCALL, EXPRESSIONSTATEMENT, IFSTATEMENT, CONDITION, ASSIGNMENT} type;
 typedef enum {EQUALS, NOTEQUALS} operator_type;
 
 
@@ -26,6 +28,8 @@ class Statement : public Node {
 class Block : public Expression {
 public:
 	const int getNodeType() const override { return BLOCK; }
+	std::vector<std::string> parameter_names;
+	ExpressionList parameters_expressions;
 	StatementList statements;
 	Block() {};
 };
@@ -35,6 +39,30 @@ public:
 	const int getNodeType() const override { return INTEGER; }
 	int value;
 	Integer(int value) : value(value) {}
+};
+
+class Vector {
+public:
+	std::vector<Integer> values;
+	Vector(Integer value)
+	{
+		Push(value);
+	};
+	void Push(Integer value)
+	{
+		this->values.push_back(value);
+	}
+};
+
+class List : public Expression {
+public:
+	const int getNodeType() const override { return LIST; }
+	std::vector<Integer> values;
+	List() {}
+	List(Vector* values)
+	{
+		this->values = values->values;
+	}
 };
 
 class Identifier : public Expression {
@@ -48,8 +76,9 @@ class FunctionCall : public Expression {
 public:
 	const int getNodeType() const override { return FUNCTIONCALL; }
 	Identifier& id;
-	// Arguments
+	ExpressionList parameters;
 	FunctionCall(Identifier& id) : id(id) {};
+	FunctionCall(Identifier& id, ExpressionList& parameters) : id(id), parameters(parameters) {};
 };
 
 class Condition : public Expression {
@@ -91,9 +120,11 @@ public:
 	const int getNodeType() const override { return FUNCTIONDEFINITION; }
 	// const Identifier& type;
 	Identifier& id;
-	// Params
+	VariableList parameters;
 	Block& block;
 	FunctionDefinition(/*const Identifier& type, */ Identifier& id, Block &block): id(id), block(block) {}
+	FunctionDefinition(/*const Identifier& type, */ Identifier& id, VariableList& parameters, Block &block): id(id), parameters(parameters), block(block) {}
+
 };
 
 class SpecialFunctionDefinition : public Statement {

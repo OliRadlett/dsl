@@ -2,6 +2,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <vector>
+#include <sstream>
 #include <typeinfo>
 #include "main.h"
 #include "ast.h"
@@ -15,6 +16,50 @@ extern "C" FILE *yyin;
 typedef std::unordered_map<std::string, Node*> SymbolTable;
 std::vector<SymbolTable> VariableTable;
 SymbolTable FunctionTable;
+
+Node* interpret(Node* node);
+
+std::string pprint_list(std::vector<Integer> vector)
+{
+    if (vector.empty()) {
+        return "[]";
+    }
+
+    std::ostringstream oss;
+    oss << "[";
+
+    for (size_t i = 0; i < vector.size() - 1; i++) {
+        oss << vector[i].value << ", ";
+    }
+
+    oss << vector.back().value << "]";
+
+    return oss.str();
+}
+
+std::string pprint_list(std::vector<Expression*> vector)
+{
+    std::ostringstream oss;
+
+    for (size_t i = 0; i < vector.size(); i++) {
+        Node* assignmentExpr = interpret(vector[i]);
+        oss << "(" << assignmentExpr->getNodeType() << ") ";
+    }
+
+    return oss.str();
+}
+
+std::string pprint_list(std::vector<VariableDefinition*> vector)
+{
+
+    std::ostringstream oss;
+
+    for (size_t i = 0; i < vector.size(); i++) {
+        oss << vector[i]->id.name << " ";
+    }
+
+    return oss.str();
+}
 
 void print_debug_info()
 {
@@ -31,6 +76,10 @@ void print_debug_info()
         if (Integer* integer = dynamic_cast<Integer*>(it->second))
         {
             std::cout << it->first << ": " << integer->value << std::endl;
+        }
+        else if (List* list = dynamic_cast<List*>(it->second))
+        {
+            std::cout << it->first << ": " << pprint_list(list->values) << std::endl;
         }
     }
 }
@@ -104,7 +153,6 @@ bool evaluate(Node* lhs, Node* rhs, int op)
     }
 }
 
-
 Node* interpret(Node* node)
 {
     switch (node->getNodeType())
@@ -124,6 +172,19 @@ Node* interpret(Node* node)
             Block* block = dynamic_cast<Block*>(node);
             // Create a new symbol table for this block's scope
             SymbolTable blockScope;
+
+            // Also need to make sure parameters are at the top of the scope
+
+            // // Need to map these to their expected names
+            if (!block->parameter_names.empty())
+            {
+                for (size_t i = 0; i < block->parameter_names.size(); i++)
+                {
+                    std::cout << "Adding " << block->parameter_names[i] << " with value " << block->parameters_expressions[i] << " to function scope" << std::endl;
+                    blockScope[block->parameter_names[i]] = interpret(block->parameters_expressions[i]);
+                }
+            }
+
             // Push the symbol table onto the stack
             VariableTable.push_back(blockScope);
             // Interpret each statement in the block
@@ -195,6 +256,10 @@ Node* interpret(Node* node)
                     {
                         std::cout << "Variable defined. Identifier:" << variableDefinition->id.name  << " Assignment Expression: " << value->value << std::endl;
                     }
+                    else if (List* value = dynamic_cast<List*>(assignmentExpr))
+                    {
+                        std::cout << "Variable defined. Identifier:" << variableDefinition->id.name  << " Assignment Expression: " << pprint_list(value->values) << std::endl;
+                    }
                     else
                     {
                         std::cout << "Something shite happened: " << assignmentExpr << std::endl;
@@ -265,14 +330,15 @@ Node* interpret(Node* node)
         {
             std::cout << "Function call" << std::endl;
             FunctionCall* call = dynamic_cast<FunctionCall*>(node);
-            std::cout << "Identifier: " << call->id.name << std::endl;
+            Block* function = dynamic_cast<Block*>(FunctionTable[call->id.name]);
+            std::cout << "Identifier: " << call->id.name;
+            if (!call->parameters.empty())
+            {
+                std::cout << " Parameters: " << pprint_list(call->parameters);
+                function->parameters_expressions = call->parameters;
+            }
+            std::cout << std::endl;
 
-            // if (FunctionTable.find(call->id.name) != functionTable.end())
-            // {
-
-            // }
-
-            Node* function = FunctionTable[call->id.name];
             if (function != nullptr)
             {
                 interpret(function);
@@ -298,8 +364,25 @@ Node* interpret(Node* node)
             FunctionDefinition* fd = dynamic_cast<FunctionDefinition*>(node);
             if (identifier_available(fd->id.name))
             {
+                std::cout << "Identifier: " << fd->id.name;
+                if (!fd->parameters.empty())
+                {
+                    std::cout << " Parameters: " << pprint_list(fd->parameters);
+
+                    std::vector<std::string> parameter_names;
+
+                    for (size_t i = 0; i < fd->parameters.size(); i++)
+                    {
+                        // Need to make sure these are in the same order as the call arguements
+                        parameter_names.push_back(fd->parameters[i]->id.name);
+                    }
+
+                    fd->block.parameter_names = parameter_names;
+
+                }
+                std::cout << std::endl;
                 FunctionTable[fd->id.name] = &fd->block;
-                std::cout << "Identifier: " << fd->id.name << std::endl;
+
             }
             else 
             {
@@ -319,6 +402,13 @@ Node* interpret(Node* node)
                 Node* block = dynamic_cast<Node*>(&if_statement->block);
                 interpret(block);
             }
+        }
+        break;
+    case LIST:
+        {
+            std::cout << "List" << std::endl;
+            List* list = dynamic_cast<List*>(node);
+            return list;
         }
         break;
     default:
