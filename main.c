@@ -319,7 +319,7 @@ Node* interpret(Node* node)
                     }
                     else
                     {
-                        print("Something shite happened: ");
+                        print("Unimplemented datatype:");
                         print(assignmentExpr);
                     }
                 }
@@ -526,11 +526,6 @@ int main(int argc, char **argv)
     // Create global scope
     SymbolTable globalScope;
     VariableTable.push_back(globalScope);
-
-    if (programBlock == nullptr)
-    {
-            throw std::runtime_error("AST not formed");
-    }
 
     if (programBlock == nullptr)
     {

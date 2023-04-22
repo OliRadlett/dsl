@@ -47,7 +47,7 @@ class String : public Expression {
 public:
 	const int getNodeType() const override { return STRING; }
 	std::string value;
-	String(std::string value) : value(value) {}
+	String(std::string value) { this->value = value.substr(1, value.length() - 2);} // Nice easy way to remove the speech marks from a string
 };
 
 
