@@ -20,6 +20,7 @@
 "score" { return TOKEN(T_SPECIAL_FUNCTION_SCORE); }
 "print" { return TOKEN(T_LIBRARY_FUNCTION_PRINT); }
 "all" { return TOKEN(T_LIBRARY_FUNCTION_ALL); }
+"exists" { return TOKEN(T_LIBRARY_FUNCTION_EXISTS); }
 "countif" { return TOKEN(T_LIBRARY_FUNCTION_COUNTIF); }
 "if" { return TOKEN(T_IF); }
 "else" { return TOKEN(T_ELSE); }
