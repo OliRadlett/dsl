@@ -9,7 +9,8 @@
 Block *programBlock;
 
 int yylex();
-void yyerror(const char *s) { printf("ERROR: %s\n", s); }
+extern int yylineno;
+void yyerror(const char *s) { printf("ERROR: %s on line %d\n", s, yylineno); }
 %}
 
 %define parse.error verbose
@@ -53,7 +54,8 @@ void yyerror(const char *s) { printf("ERROR: %s\n", s); }
 
 %%
 
-program: statements { programBlock = $1; };
+program: { if (yylineno == 1) { yyerror("empty input file"); } }
+     	| statements { programBlock = $1; };
 
 statements: statement { $$ = new Block(); $$->statements.push_back($<statement>1); }
  			| statements statement { $1->statements.push_back($<statement>2); };

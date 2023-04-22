@@ -8,7 +8,9 @@
 %}
 
 %%
+\n { yylineno++; }
 [ \t\r\n]+ {}
+"//" { while (1) { char c = yyinput(); if (c == '\n') break; else if (c == 0) { break; } } }
 "var" { return TOKEN(T_VARIABLE_DEFINITION); }
 "rank" { return TOKEN(T_DATATYPE); }
 "suit" { return TOKEN(T_DATATYPE); }
