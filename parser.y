@@ -24,6 +24,8 @@ void yyerror(const char *s) { printf("ERROR: %s on line %d\n", s, yylineno); }
 	Identifier *identifier;
 	String *string_;
 	Condition *condition;
+	LambdaExpression *lambda_expression;
+	LambdaArgs *lambda_args;
 	VariableDefinition *variable_definition;
 	std::vector<VariableDefinition*> *variable_definition_vector;
     	std::vector<Expression*> *expression_vector;
@@ -34,8 +36,8 @@ void yyerror(const char *s) { printf("ERROR: %s on line %d\n", s, yylineno); }
 	int token;
 }
 
-%token <string> T_VARIABLE_DEFINITION T_DATATYPE T_INTEGER T_IDENTIFIER T_IF T_ELSE T_SPECIAL_FUNCTION_SETUP T_SPECIAL_FUNCTION_LEAD T_SPECIAL_FUNCTION_FOLLOW T_SPECIAL_FUNCTION_SCORE T_LIBRARY_FUNCTION_PRINT T_LIBRARY_FUNCTION_COUNTIF T_STRING
-%token <token> T_OPEN_BRACKETS T_CLOSE_BRACKETS T_OPEN_SQUIGGLY  T_CLOSE_SQUIGGLY T_COLON T_COMMA T_EQUALS T_OPEN_SQUARE T_CLOSE_SQUARE T_CONDITION_EQUALS T_CONDITION_NOT_EQUALS
+%token <string> T_VARIABLE_DEFINITION T_DATATYPE T_INTEGER T_IDENTIFIER T_IF T_ELSE T_SPECIAL_FUNCTION_SETUP T_SPECIAL_FUNCTION_LEAD T_SPECIAL_FUNCTION_FOLLOW T_SPECIAL_FUNCTION_SCORE T_LIBRARY_FUNCTION_PRINT T_LIBRARY_FUNCTION_ALL T_LIBRARY_FUNCTION_COUNTIF T_STRING
+%token <token> T_OPEN_BRACKETS T_CLOSE_BRACKETS T_OPEN_SQUIGGLY  T_CLOSE_SQUIGGLY T_COLON T_COMMA T_EQUALS T_OPEN_SQUARE T_CLOSE_SQUARE T_CONDITION_EQUALS T_CONDITION_NOT_EQUALS T_ARROW
 
 %type <identifier> identifier condition_identifier
 %type <string_> string
@@ -49,6 +51,8 @@ void yyerror(const char *s) { printf("ERROR: %s on line %d\n", s, yylineno); }
 %type <list> list
 %type <vector> list_items
 %type <integer> list_item
+%type <lambda_args> lambda_args
+%type <lambda_expression> lambda_expression
 
 %start program
 
@@ -117,7 +121,11 @@ block : T_OPEN_SQUIGGLY statements T_CLOSE_SQUIGGLY { $$ = $2; }
 special_function: {}
 
 library_function: T_LIBRARY_FUNCTION_PRINT T_OPEN_BRACKETS function_call_args T_CLOSE_BRACKETS { $$ = new LibraryFunction(0, *$3); }
-			| T_LIBRARY_FUNCTION_COUNTIF T_OPEN_BRACKETS function_call_args T_CLOSE_BRACKETS { $$ = new LibraryFunction(1, *$3); }
+			| T_LIBRARY_FUNCTION_COUNTIF T_OPEN_BRACKETS lambda_args T_CLOSE_BRACKETS { $$ = new LibraryFunction(1, $3); }
 
+
+lambda_args: identifier T_COMMA lambda_expression { $$ = new LambdaArgs(*$1, $3); }
+
+lambda_expression: identifier T_ARROW condition { $$ = new LambdaExpression(*$1, $3); };
 
 %%

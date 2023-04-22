@@ -9,7 +9,7 @@ class VariableDefinition;
 typedef std::vector<Statement*> StatementList;
 typedef std::vector<Expression*> ExpressionList;
 typedef std::vector<VariableDefinition*> VariableList;
-typedef enum {NODE, EXPRESSION, STATEMENT, BLOCK, INTEGER, STRING, LIST, IDENTIFIER, VARIABLEDEFINITION, FUNCTIONDEFINITION, SPECIALFUNCTIONDEFINITION, LIBRARYFUNCTION, FUNCTIONCALL, EXPRESSIONSTATEMENT, IFSTATEMENT, CONDITION, ASSIGNMENT} type;
+typedef enum {NODE, EXPRESSION, STATEMENT, BLOCK, INTEGER, STRING, LIST, IDENTIFIER, VARIABLEDEFINITION, FUNCTIONDEFINITION, SPECIALFUNCTIONDEFINITION, LIBRARYFUNCTION, FUNCTIONCALL, EXPRESSIONSTATEMENT, IFSTATEMENT, CONDITION, ASSIGNMENT, LAMBDAEXPRESSION, LAMBDAARGS} type;
 typedef enum {EQUALS, NOTEQUALS} operator_type;
 typedef enum {SETUP, LEAD, FOLLOW, SCORE} special_function;
 typedef enum {PRINT, COUNTIF} library_function;
@@ -108,6 +108,22 @@ public:
 	Assignment(Identifier& lhs, Expression *rhs) : lhs(lhs), rhs(rhs) {};
 };
 
+class LambdaExpression : public Expression {
+public:
+	const int getNodeType() const override { return LAMBDAEXPRESSION; }
+	Identifier& identifier;
+	Condition *condition;
+	LambdaExpression(Identifier& identifier, Condition *condition) : identifier(identifier), condition(condition) {};
+};
+
+class LambdaArgs : public Expression {
+public:
+	const int getNodeType() const override { return LAMBDAARGS; }
+	Identifier& identifier;
+	LambdaExpression *expression;
+	LambdaArgs(Identifier& identifier, LambdaExpression *expression) : identifier(identifier), expression(expression) {};
+};
+
 class ExpressionStatement : public Statement {
 public:
 	const int getNodeType() const override { return EXPRESSIONSTATEMENT; }
@@ -148,7 +164,10 @@ public:
 	const int getNodeType() const override { return LIBRARYFUNCTION; }
 	int type;
 	ExpressionList parameters;
-	LibraryFunction(int type, ExpressionList& parameters) : type(type), parameters(parameters) {}
+	LambdaArgs *lambda;
+	LibraryFunction(int type, ExpressionList parameters) : type(type), parameters(parameters) {}
+	LibraryFunction(int type, LambdaArgs *lambda) : type(type), lambda(lambda) {}
+
 };
 
 

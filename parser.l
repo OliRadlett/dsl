@@ -19,6 +19,7 @@
 "follow" { return TOKEN(T_SPECIAL_FUNCTION_FOLLOW); }
 "score" { return TOKEN(T_SPECIAL_FUNCTION_SCORE); }
 "print" { return TOKEN(T_LIBRARY_FUNCTION_PRINT); }
+"all" { return TOKEN(T_LIBRARY_FUNCTION_ALL); }
 "countif" { return TOKEN(T_LIBRARY_FUNCTION_COUNTIF); }
 "if" { return TOKEN(T_IF); }
 "else" { return TOKEN(T_ELSE); }
@@ -33,7 +34,8 @@
 "=" { return TOKEN(T_EQUALS); }
 "[" { return TOKEN(T_OPEN_SQUARE); }
 "]" { return TOKEN(T_CLOSE_SQUARE); }
-\"[^\"\n]*\"   { SAVE_TOKEN; return T_STRING; }
+"->" { return TOKEN(T_ARROW); }
+\"[^\"\n]*\" { SAVE_TOKEN; return T_STRING; }
 [0-9]+ { SAVE_TOKEN; return T_INTEGER; }
 [a-zA-Z]+ { SAVE_TOKEN; return T_IDENTIFIER; }
 
