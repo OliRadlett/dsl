@@ -495,18 +495,10 @@ Node* interpret(Node* node)
                 print("Parameters: " + pprint_list(call->parameters));
                 function->parameters_expressions = call->parameters;
             }
-            std::cout << std::endl;
-
             if (function != nullptr)
             {
                 interpret(function);
             }
-
-            // TODO Retrieve function from FunctionTable and run this on it's Block
-            // Block* block = &fd->block;
-            // for (auto stmt : block->statements) {
-            //     interpret(stmt);
-            // }
         }
         break;
     case EXPRESSIONSTATEMENT:
