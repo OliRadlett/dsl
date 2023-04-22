@@ -122,6 +122,7 @@ special_function: {}
 
 library_function: T_LIBRARY_FUNCTION_PRINT T_OPEN_BRACKETS function_call_args T_CLOSE_BRACKETS { $$ = new LibraryFunction(0, *$3); }
 			| T_LIBRARY_FUNCTION_COUNTIF T_OPEN_BRACKETS lambda_args T_CLOSE_BRACKETS { $$ = new LibraryFunction(1, $3); }
+			| T_LIBRARY_FUNCTION_ALL T_OPEN_BRACKETS lambda_args T_CLOSE_BRACKETS { $$ = new LibraryFunction(2, $3); }
 
 
 lambda_args: identifier T_COMMA lambda_expression { $$ = new LambdaArgs(*$1, $3); }

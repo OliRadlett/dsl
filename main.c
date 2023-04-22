@@ -198,6 +198,8 @@ void library_print(ExpressionList& parameters)
     }
 }
 
+//MOVE LIBRARY FUNCTIONS TO ANOTHER FILE
+
 
 // This will need to have a return
 void library_countif(LambdaArgs* lambda)
@@ -232,6 +234,50 @@ void library_countif(LambdaArgs* lambda)
     else
     {
         throw std::runtime_error("countif only works on lists");
+    }
+}
+
+// This will need to have a return
+void library_all(LambdaArgs* lambda)
+{
+
+    if (lambda->expression->identifier.name.compare(lambda->expression->condition->lhs.name) != 0)
+    {
+        throw std::runtime_error("Malformed lambda expression");
+    }
+
+    // Cast identifier and rhs to Node* so we can pass it through the interpreter to extract its value
+    Node* variable = dynamic_cast<Node*>(&lambda->identifier);
+    Node* rhs = dynamic_cast<Node*>(&lambda->expression->condition->rhs);
+    variable = interpret(variable);
+    rhs = interpret(rhs);
+    int count = 0;
+    if (List* list = dynamic_cast<List*>(variable))
+    {
+
+        for (size_t i = 0; i < list->values.size(); i++)
+        {
+            // This is fun because lists contain ints not Integers we have to do some type casting
+            Node* lhs = new Integer(list->values[i]);
+            if (evaluate(lhs, rhs, lambda->expression->condition->op))
+            {
+                count++;
+            }
+        }
+
+        if (count == list->values.size())
+        {
+            std::cout << "True" << std::endl;
+        }
+        else
+        {
+            std::cout << "False" << std::endl;
+        }
+        // Need to return but we'll print for now
+    }
+    else
+    {
+        throw std::runtime_error("all only works on lists");
     }
 }
 
@@ -508,6 +554,12 @@ Node* interpret(Node* node)
                     {
                         print("Countif library function");
                         library_countif(function->lambda);
+                        break;
+                    }
+                case ALL:
+                    {
+                        print("All library function");
+                        library_all(function->lambda);
                         break;
                     }
                 default:
