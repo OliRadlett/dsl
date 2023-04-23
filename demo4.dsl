@@ -5,3 +5,4 @@ test() {
 
 var x = 1
 var z = test()
+print(z)

@@ -37,13 +37,13 @@ void yyerror(const char *s) { printf("ERROR: %s on line %d\n", s, yylineno); }
 	int token;
 }
 
-%token <string> T_VARIABLE_DEFINITION T_DATATYPE T_INTEGER T_IDENTIFIER T_IF T_ELSE T_SPECIAL_FUNCTION_SETUP T_SPECIAL_FUNCTION_LEAD T_SPECIAL_FUNCTION_FOLLOW T_SPECIAL_FUNCTION_SCORE T_LIBRARY_FUNCTION_PRINT T_LIBRARY_FUNCTION_ALL T_LIBRARY_FUNCTION_EXISTS T_LIBRARY_FUNCTION_COUNTIF T_STRING T_RETURN
+%token <string> T_VARIABLE_DEFINITION T_DATATYPE T_INTEGER T_IDENTIFIER T_IF T_ELSE T_SPECIAL_FUNCTION_SETUP T_SPECIAL_FUNCTION_LEAD T_SPECIAL_FUNCTION_FOLLOW T_SPECIAL_FUNCTION_SCORE T_LIBRARY_FUNCTION_PRINT T_LIBRARY_FUNCTION_ALL T_LIBRARY_FUNCTION_EXISTS T_LIBRARY_FUNCTION_COUNTIF T_STRING T_RETURN T_TRUE T_FALSE
 %token <token> T_OPEN_BRACKETS T_CLOSE_BRACKETS T_OPEN_SQUIGGLY  T_CLOSE_SQUIGGLY T_COLON T_COMMA T_EQUALS T_OPEN_SQUARE T_CLOSE_SQUARE T_CONDITION_EQUALS T_CONDITION_NOT_EQUALS T_ARROW
 
 %type <identifier> identifier condition_identifier
 %type <string_> string
 %type <condition> condition
-%type <expression> numeric expression special_function
+%type <expression> numeric boolean expression special_function
 %type <block> program statements block functionblock
 %type <statement> statement variable_definition function_definition if library_function
 %type <token> operator
@@ -81,7 +81,7 @@ function_definition_args: { $$ = new VariableList(); }
 
 if: T_IF T_OPEN_BRACKETS condition T_CLOSE_BRACKETS block { $$ = new IfStatement($3, *$5); }
 
-condition_identifier: identifier | numeric
+condition_identifier: identifier | numeric | boolean
 
 condition: condition_identifier operator condition_identifier { $$ = new Condition(*$1, *$3, $2); }
 
@@ -90,6 +90,8 @@ operator: T_CONDITION_EQUALS { $$ = 0; } | T_CONDITION_NOT_EQUALS { $$ = 1; }
 identifier: T_IDENTIFIER { $$ = new Identifier(*$1); delete $1; }
 
 numeric: T_INTEGER { $$ = new Integer(atol($1->c_str())); delete $1; }
+
+boolean: T_TRUE { $$ = new Boolean(true); } | T_FALSE { $$ = new Boolean(false); }
 
 string: T_STRING { $$ = new String(*$1); delete $1; }
 
@@ -109,6 +111,7 @@ function_call_args: { $$ = new ExpressionList(); }
 
 expression: identifier { $<identifier>$ = $1; }
      | numeric
+     | boolean
      | list
      | string { $<string_>$ = $1; }
      | special_function {}

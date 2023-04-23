@@ -139,6 +139,21 @@ bool evaluate(Node* lhs, Node* rhs, int op)
                    }
                 }
             }
+            else if (Boolean* lhs_ = dynamic_cast<Boolean*>(lhs))
+            {
+                if (Boolean* rhs_ = dynamic_cast<Boolean*>(rhs))
+                {
+                   print("Evalutating " + std::to_string(lhs_->value) + " == " + std::to_string(rhs_->value));
+                   if (lhs_->value == rhs_->value)
+                   {
+                    return true;
+                   }
+                   else
+                   {
+                    return false;
+                   }
+                }
+            }
         }
         break;
     case NOTEQUALS:
@@ -146,6 +161,21 @@ bool evaluate(Node* lhs, Node* rhs, int op)
             if (Integer* lhs_ = dynamic_cast<Integer*>(lhs))
             {
                 if (Integer* rhs_ = dynamic_cast<Integer*>(rhs))
+                {
+                   print("Evalutating " + std::to_string(lhs_->value) + " != " + std::to_string(rhs_->value));
+                   if (lhs_->value != rhs_->value)
+                   {
+                    return true;
+                   }
+                   else
+                   {
+                    return false;
+                   }
+                }
+            }
+            else if (Boolean* lhs_ = dynamic_cast<Boolean*>(lhs))
+            {
+                if (Boolean* rhs_ = dynamic_cast<Boolean*>(rhs))
                 {
                    print("Evalutating " + std::to_string(lhs_->value) + " != " + std::to_string(rhs_->value));
                    if (lhs_->value != rhs_->value)
@@ -195,6 +225,19 @@ void library_print(ExpressionList& parameters)
             print("Printing string");
             std::cout << value->value << std::endl;
         }
+        else if (Boolean* value = dynamic_cast<Boolean*>(toPrint))
+        {
+            print("Printing boolean");
+            // Print true/false not 1/0
+            if (value->value)
+            {
+                std::cout << "True" << std::endl;
+            }
+            else
+            {
+                std::cout << "False" << std::endl;
+            }
+        }
         else
         {
             throw std::runtime_error("Invalid parameter");
@@ -241,7 +284,7 @@ Integer* library_countif(LambdaArgs* lambda)
     return 0; // This should never occur
 }
 
-bool library_all(LambdaArgs* lambda)
+Boolean* library_all(LambdaArgs* lambda)
 {
 
     if (lambda->expression->identifier.name.compare(lambda->expression->condition->lhs.name) != 0)
@@ -271,22 +314,22 @@ bool library_all(LambdaArgs* lambda)
         if (count == list->values.size())
         {
             print("True");
-            return true;
+            return new Boolean(true);
         }
         else
         {
             print("False");
-            return false;
+            return new Boolean(false);
         }
     }
     else
     {
         throw std::runtime_error("all only works on lists");
     }
-    return false; // This should never occur
+    return new Boolean(false); // This should never occur
 }
 
-bool library_exists(LambdaArgs* lambda)
+Boolean* library_exists(LambdaArgs* lambda)
 {
 
     if (lambda->expression->identifier.name.compare(lambda->expression->condition->lhs.name) != 0)
@@ -309,18 +352,18 @@ bool library_exists(LambdaArgs* lambda)
             if (evaluate(lhs, rhs, lambda->expression->condition->op))
             {
                 print("True");
-                return true;
+                return new Boolean(true);
             }
         }
 
         print("False");
-        return false;
+        return new Boolean(false);
     }
     else
     {
         throw std::runtime_error("exists only works on lists");
     }
-    return false; // Should never occur
+    return new Boolean(false); // Should never occur
 }
 
 
@@ -403,6 +446,10 @@ Node* interpret(Node* node)
             {
                 print("Found string: " + value->value);
                 return value;
+            } else if (Boolean* value = dynamic_cast<Boolean*>(identifier))
+            {
+                print("Found boolean: " + value->value);
+                return value;
             }
 
             // This might need changing
@@ -468,6 +515,10 @@ Node* interpret(Node* node)
                     else if (String* value = dynamic_cast<String*>(assignmentExpr))
                     {
                         print("Variable defined. Identifier: " + variableDefinition->id.name  + " Assignment Expression: " + value->value);
+                    }
+                    else if (Boolean* value = dynamic_cast<Boolean*>(assignmentExpr))
+                    {
+                        print("Variable defined. Identifier: " + variableDefinition->id.name  + " Assignment Expression: " + std::to_string(value->value));
                     }
                     else
                     {
@@ -598,6 +649,13 @@ Node* interpret(Node* node)
             return string;
         }
         break;
+    case BOOLEAN:
+        {
+            print("Boolean");
+            Boolean* boolean = dynamic_cast<Boolean*>(node);
+            return boolean;
+        }
+        break;
     case LIBRARYFUNCTION:
         {
             print("Library function");
@@ -619,13 +677,13 @@ Node* interpret(Node* node)
                 case ALL:
                     {
                         print("All library function");
-                        library_all(function->lambda);
+                        return library_all(function->lambda);
                         break;
                     }
                 case EXISTS:
                     {
                         print("Exists library function");
-                        library_exists(function->lambda);
+                        return library_exists(function->lambda);
                         break;
                     }
                 default:

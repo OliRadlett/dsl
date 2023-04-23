@@ -22,6 +22,8 @@
 "all" { return TOKEN(T_LIBRARY_FUNCTION_ALL); }
 "exists" { return TOKEN(T_LIBRARY_FUNCTION_EXISTS); }
 "countif" { return TOKEN(T_LIBRARY_FUNCTION_COUNTIF); }
+"true" { return TOKEN(T_TRUE); }
+"false" { return TOKEN(T_FALSE); }
 "if" { return TOKEN(T_IF); }
 "else" { return TOKEN(T_ELSE); }
 "return" { return TOKEN(T_RETURN); }

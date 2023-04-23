@@ -9,7 +9,7 @@ class VariableDefinition;
 typedef std::vector<Statement*> StatementList;
 typedef std::vector<Expression*> ExpressionList;
 typedef std::vector<VariableDefinition*> VariableList;
-typedef enum {NODE, EXPRESSION, STATEMENT, BLOCK, INTEGER, STRING, LIST, IDENTIFIER, VARIABLEDEFINITION, FUNCTIONDEFINITION, SPECIALFUNCTIONDEFINITION, LIBRARYFUNCTION, FUNCTIONCALL, EXPRESSIONSTATEMENT, IFSTATEMENT, CONDITION, ASSIGNMENT, LAMBDAEXPRESSION, LAMBDAARGS, RETURN} type;
+typedef enum {NODE, EXPRESSION, STATEMENT, BLOCK, INTEGER, STRING, LIST, BOOLEAN, IDENTIFIER, VARIABLEDEFINITION, FUNCTIONDEFINITION, SPECIALFUNCTIONDEFINITION, LIBRARYFUNCTION, FUNCTIONCALL, EXPRESSIONSTATEMENT, IFSTATEMENT, CONDITION, ASSIGNMENT, LAMBDAEXPRESSION, LAMBDAARGS, RETURN} type;
 typedef enum {EQUALS, NOTEQUALS} operator_type;
 typedef enum {SETUP, LEAD, FOLLOW, SCORE} special_function;
 typedef enum {PRINT, COUNTIF, ALL, EXISTS} library_function;
@@ -50,6 +50,12 @@ public:
 	String(std::string value) { this->value = value.substr(1, value.length() - 2);} // Nice easy way to remove the speech marks from a string
 };
 
+class Boolean : public Expression {
+public:
+	const int getNodeType() const override { return BOOLEAN; }
+	bool value;
+	Boolean(bool value) : value(value) {}
+};
 
 class Vector {
 public:
