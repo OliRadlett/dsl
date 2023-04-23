@@ -24,6 +24,7 @@
 "countif" { return TOKEN(T_LIBRARY_FUNCTION_COUNTIF); }
 "if" { return TOKEN(T_IF); }
 "else" { return TOKEN(T_ELSE); }
+"return" { return TOKEN(T_RETURN); }
 "==" { return TOKEN(T_CONDITION_EQUALS); }
 "!=" { return TOKEN(T_CONDITION_NOT_EQUALS); }
 "(" { return TOKEN(T_OPEN_BRACKETS); }

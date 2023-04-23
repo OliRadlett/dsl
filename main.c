@@ -201,8 +201,7 @@ void library_print(ExpressionList& parameters)
 //MOVE LIBRARY FUNCTIONS TO ANOTHER FILE
 
 
-// This will need to have a return
-void library_countif(LambdaArgs* lambda)
+int library_countif(LambdaArgs* lambda)
 {
 
     if (lambda->expression->identifier.name.compare(lambda->expression->condition->lhs.name) != 0)
@@ -228,17 +227,17 @@ void library_countif(LambdaArgs* lambda)
                 count++;
             }
         }
-        // Need to return but we'll print for now
-        std::cout << count << std::endl;
+        print(count);
+        return count;
     }
     else
     {
         throw std::runtime_error("countif only works on lists");
     }
+    return 0; // This should never occur
 }
 
-// This will need to have a return
-void library_all(LambdaArgs* lambda)
+bool library_all(LambdaArgs* lambda)
 {
 
     if (lambda->expression->identifier.name.compare(lambda->expression->condition->lhs.name) != 0)
@@ -267,22 +266,23 @@ void library_all(LambdaArgs* lambda)
 
         if (count == list->values.size())
         {
-            std::cout << "True" << std::endl;
+            print("True");
+            return true;
         }
         else
         {
-            std::cout << "False" << std::endl;
+            print("False");
+            return false;
         }
-        // Need to return but we'll print for now
     }
     else
     {
         throw std::runtime_error("all only works on lists");
     }
+    return false; // This should never occur
 }
 
-// This will need to have a return
-void library_exists(LambdaArgs* lambda)
+bool library_exists(LambdaArgs* lambda)
 {
 
     if (lambda->expression->identifier.name.compare(lambda->expression->condition->lhs.name) != 0)
@@ -304,19 +304,19 @@ void library_exists(LambdaArgs* lambda)
             Node* lhs = new Integer(list->values[i]);
             if (evaluate(lhs, rhs, lambda->expression->condition->op))
             {
-                // Need to return but we'll print for now
-                std::cout << "True" << std::endl;
-                return; // Only because we don't return yet
+                print("True");
+                return true;
             }
         }
 
-        // Need to return but we'll print for now
-        std::cout << "False" << std::endl;
+        print("False");
+        return false;
     }
     else
     {
         throw std::runtime_error("exists only works on lists");
     }
+    return false; // Should never occur
 }
 
 
@@ -342,7 +342,7 @@ Node* interpret(Node* node)
 
             // Also need to make sure parameters are at the top of the scope
 
-            // // Need to map these to their expected names
+            // Add paramaters to scope
             if (!block->parameter_names.empty())
             {
                 for (size_t i = 0; i < block->parameter_names.size(); i++)
@@ -356,7 +356,18 @@ Node* interpret(Node* node)
             VariableTable.push_back(blockScope);
             // Interpret each statement in the block
             for (auto stmt : block->statements) {
-                interpret(stmt);
+                // Node* node = interpret(stmt);
+                if (Return* return_ = dynamic_cast<Return*>(stmt))
+                {
+                    // Evaluate the return expression and then remove the scope from the stack BEFORE returning
+                    Node* x =  interpret(return_->expression);
+                    VariableTable.pop_back();
+                    return x;
+                }
+                else
+                {
+                    interpret(stmt);
+                }
             }
             // Pop the symbol table off the stack when we leave the block
             VariableTable.pop_back();
@@ -414,18 +425,33 @@ Node* interpret(Node* node)
         {
             print("Variable definition");
             VariableDefinition* variableDefinition = dynamic_cast<VariableDefinition*>(node);
-
-            SymbolTable& currentScope = VariableTable.back();
+            bool pop = false;
 
             if (identifier_available(variableDefinition->id.name))
             {
                 Node* assignmentExpr = nullptr;
                 if (variableDefinition->assignmentExpression != nullptr)
                 {
-                    // Functions will need lots of work here
-                    // All other datatypes will need adding
-
-                    assignmentExpr = interpret(variableDefinition->assignmentExpression);
+                    if (FunctionCall* value = dynamic_cast<FunctionCall*>(variableDefinition->assignmentExpression))
+                    {
+                        print("Assigning to function call");
+                        pop = true;
+                        Block* function = dynamic_cast<Block*>(FunctionTable[value->id.name]);
+                        if (!value->parameters.empty())
+                        {
+                            print("Parameters: " + pprint_list(value->parameters));
+                            function->parameters_expressions = value->parameters;
+                        }
+                        if (function != nullptr)
+                        {
+                            assignmentExpr = interpret(function);
+                        }
+                        
+                    }
+                    else
+                    {
+                        assignmentExpr = interpret(variableDefinition->assignmentExpression);
+                    }
 
                     if (Integer* value = dynamic_cast<Integer*>(assignmentExpr))
                     {
@@ -441,16 +467,17 @@ Node* interpret(Node* node)
                     }
                     else
                     {
-                        print("Unimplemented datatype:");
-                        print(assignmentExpr);
+                        throw std::runtime_error("Unimplemented datatype");
                     }
                 }
                 else
                 {
                     print("Identifier: " + variableDefinition->id.name + " (no assignment expression)");
                 }
-                // Add the variable to the current scope's symbol table
+
+                SymbolTable& currentScope = VariableTable.back();
                 currentScope[variableDefinition->id.name] = assignmentExpr;
+
             }
             else 
             {
@@ -530,7 +557,6 @@ Node* interpret(Node* node)
                     fd->block.parameter_names = parameter_names;
 
                 }
-                std::cout << std::endl;
                 FunctionTable[fd->id.name] = &fd->block;
 
             }
@@ -602,6 +628,13 @@ Node* interpret(Node* node)
                     print("Unknown library function");
                     break;
             }
+        }
+        break;
+    case RETURN:
+        {
+            print("Return");
+            Expression* expression = dynamic_cast<Expression*>(node);
+            return expression;
         }
         break;
     default:
