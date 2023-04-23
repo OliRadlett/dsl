@@ -572,6 +572,12 @@ Node* interpret(Node* node)
             FunctionCall* call = dynamic_cast<FunctionCall*>(node);
             Block* function = dynamic_cast<Block*>(FunctionTable[call->id.name]);
             print("Identifier: " + call->id.name);
+
+            if (function->parameter_names.size() > call->parameters.size())
+            {
+                throw std::runtime_error("Not enough parameters provided");
+            }
+
             if (!call->parameters.empty())
             {
                 print("Parameters: " + pprint_list(call->parameters));
