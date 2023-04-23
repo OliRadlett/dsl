@@ -112,6 +112,7 @@ expression: identifier { $<identifier>$ = $1; }
      | list
      | string { $<string_>$ = $1; }
      | special_function {}
+     | library_function {}
      | identifier T_EQUALS identifier { $$ = new Assignment(*$1, $3); }
      | identifier T_EQUALS expression { $$ = new Assignment(*$1, $3); }
      | identifier T_OPEN_BRACKETS T_CLOSE_BRACKETS { $$ = new FunctionCall(*$1); }

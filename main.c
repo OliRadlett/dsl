@@ -195,13 +195,17 @@ void library_print(ExpressionList& parameters)
             print("Printing string");
             std::cout << value->value << std::endl;
         }
+        else
+        {
+            throw std::runtime_error("Invalid parameter");
+        }
     }
 }
 
 //MOVE LIBRARY FUNCTIONS TO ANOTHER FILE
 
 
-int library_countif(LambdaArgs* lambda)
+Integer* library_countif(LambdaArgs* lambda)
 {
 
     if (lambda->expression->identifier.name.compare(lambda->expression->condition->lhs.name) != 0)
@@ -228,7 +232,7 @@ int library_countif(LambdaArgs* lambda)
             }
         }
         print(count);
-        return count;
+        return new Integer(count);
     }
     else
     {
@@ -609,7 +613,7 @@ Node* interpret(Node* node)
                 case COUNTIF:
                     {
                         print("Countif library function");
-                        library_countif(function->lambda);
+                        return library_countif(function->lambda);
                         break;
                     }
                 case ALL:
