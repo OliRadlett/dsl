@@ -21,6 +21,7 @@ Node* interpret(Node* node);
 
 bool debug = false;
 
+// Print debug information (hidden from the user unless run with -d or --debug)
 template<typename T>
 void print(const T& value)
 {
@@ -30,6 +31,7 @@ void print(const T& value)
     }
 }
 
+// Pretty print a List
 std::string pprint_list(std::vector<Integer> vector)
 {
     if (vector.empty()) {
@@ -48,6 +50,7 @@ std::string pprint_list(std::vector<Integer> vector)
     return oss.str();
 }
 
+// Pretty print a list of function call parameters
 std::string pprint_list(std::vector<Expression*> vector)
 {
     std::ostringstream oss;
@@ -60,6 +63,7 @@ std::string pprint_list(std::vector<Expression*> vector)
     return oss.str();
 }
 
+// Pretty print a list of variable definitions (for function parameter declarations)
 std::string pprint_list(std::vector<VariableDefinition*> vector)
 {
 
@@ -72,6 +76,7 @@ std::string pprint_list(std::vector<VariableDefinition*> vector)
     return oss.str();
 }
 
+// Print global variable table and function table
 void print_debug_info()
 {
     std::cout << "====================================" << std::endl;
@@ -99,6 +104,7 @@ void print_debug_info()
     }
 }
 
+// Check if an identifier can be declared
 bool identifier_available(std::string name)
 {
     SymbolTable scope = VariableTable.back();
@@ -118,6 +124,7 @@ bool identifier_available(std::string name)
     return true;
 }
 
+// Evaluate a condition
 bool evaluate(Node* lhs, Node* rhs, int op)
 {
     switch (op)
@@ -199,6 +206,7 @@ bool evaluate(Node* lhs, Node* rhs, int op)
     throw std::runtime_error("Somehow condition is neither true or false. This should be impossible");
 }
 
+// Library print function - used to print a value to stdout. Library functions will be moved to another file
 void library_print(ExpressionList& parameters)
 {
     if (parameters.size() > 1)
@@ -245,9 +253,7 @@ void library_print(ExpressionList& parameters)
     }
 }
 
-//MOVE LIBRARY FUNCTIONS TO ANOTHER FILE
-
-
+// Library countif function - used to count occurences of a value in a list. Library functions will be moved to another file
 Integer* library_countif(LambdaArgs* lambda)
 {
 
@@ -284,6 +290,7 @@ Integer* library_countif(LambdaArgs* lambda)
     return 0; // This should never occur
 }
 
+// Library all function - uses to check of all the items in a list are a value. Library functions will be moved to another file
 Boolean* library_all(LambdaArgs* lambda)
 {
 
@@ -329,6 +336,7 @@ Boolean* library_all(LambdaArgs* lambda)
     return new Boolean(false); // This should never occur
 }
 
+// Library exists function - used to check if a value exists in a list. Library functions will be moved to another file
 Boolean* library_exists(LambdaArgs* lambda)
 {
 
@@ -366,7 +374,7 @@ Boolean* library_exists(LambdaArgs* lambda)
     return new Boolean(false); // Should never occur
 }
 
-
+// Recursive interpreter - main part of this file. Calls itself until it meets a left node then returns up
 Node* interpret(Node* node)
 {
     switch (node->getNodeType())
@@ -441,6 +449,7 @@ Node* interpret(Node* node)
                 return value;
             }
 
+            // Check if variable is accessible from scope
             for (auto i = VariableTable.rbegin(); i != VariableTable.rend(); i++)
             {
                 SymbolTable& symbolTable = *i;
@@ -511,6 +520,7 @@ Node* interpret(Node* node)
                     print("Identifier: " + variableDefinition->id.name + " (no assignment expression)");
                 }
 
+                // Assign variable in current scope
                 SymbolTable& currentScope = VariableTable.back();
                 currentScope[variableDefinition->id.name] = assignmentExpr;
 
@@ -528,7 +538,7 @@ Node* interpret(Node* node)
             Identifier* lhs = dynamic_cast<Identifier*>(&assignment->lhs);
             bool successful = false;
 
-            // Search backwards
+            // Search backwards (local -> global)
             for (auto i = VariableTable.rbegin(); i != VariableTable.rend(); i++)
             {
                 SymbolTable& symbolTable = *i;
@@ -562,10 +572,12 @@ Node* interpret(Node* node)
             if (!call->parameters.empty())
             {
                 print("Parameters: " + pprint_list(call->parameters));
+                // Inject parameters
                 function->parameters_expressions = call->parameters;
             }
             if (function != nullptr)
             {
+                // Run function
                 interpret(function);
             }
         }
@@ -588,11 +600,11 @@ Node* interpret(Node* node)
                 {
                     print("Parameters: " + pprint_list(fd->parameters));
 
+                    // Inject parameters
                     std::vector<std::string> parameter_names;
 
                     for (size_t i = 0; i < fd->parameters.size(); i++)
                     {
-                        // Need to make sure these are in the same order as the call arguements
                         parameter_names.push_back(fd->parameters[i]->id.name);
                     }
 
@@ -604,7 +616,6 @@ Node* interpret(Node* node)
             }
             else 
             {
-                // Throw proper error here
                 throw std::runtime_error("Identifier exists in current scope: " + fd->id.name);
             }
         }
@@ -707,6 +718,7 @@ int main(int argc, char **argv)
     bool file = false;
     const char* sourcePath;
 
+    // Process command line options
     for (int i = 1; i < argc; i++)
     {
         if (std::string(argv[i]) == "-d" || std::string(argv[i]) == "--debug")
@@ -752,12 +764,14 @@ int main(int argc, char **argv)
     print("Root node address: ");
     print(programBlock);
 
+    // Execute root node
     for (auto statement : programBlock->statements)
     {
-        // std::cout << "Interpreting statement of type " << statement->getNodeType() << std::endl;
         interpret(statement);
     }
 
+
+    // Show variable table if run with debug flag
     if (debug)
     {
         print_debug_info();
