@@ -387,8 +387,6 @@ Node* interpret(Node* node)
             // Create a new symbol table for this block's scope
             SymbolTable blockScope;
 
-            // Also need to make sure parameters are at the top of the scope
-
             // Add paramaters to scope
             if (!block->parameter_names.empty())
             {
@@ -403,7 +401,6 @@ Node* interpret(Node* node)
             VariableTable.push_back(blockScope);
             // Interpret each statement in the block
             for (auto stmt : block->statements) {
-                // Node* node = interpret(stmt);
                 if (Return* return_ = dynamic_cast<Return*>(stmt))
                 {
                     // Evaluate the return expression and then remove the scope from the stack BEFORE returning
@@ -420,20 +417,12 @@ Node* interpret(Node* node)
             VariableTable.pop_back();
         }
         break;
-    case INTEGER:
-        {
-            print("Integer");
-            Integer* integer = dynamic_cast<Integer*>(node);
-            return integer;
-        }
-        break;
     case IDENTIFIER:
         {
-            // Here we want to lookup the name in the function and variable tables and if its present we return either a value or a function pointer
             print("Identifier");
             Identifier* identifier = dynamic_cast<Identifier*>(node);
 
-            // If our identifier is actually an interger we skip the lookup and just return the value
+            // If our identifier is actually just a datatype we skip the lookup and just return the value
             if (Integer* value = dynamic_cast<Integer*>(identifier))
             {
                 print("Found integer: " + std::to_string(value->value));
@@ -452,10 +441,6 @@ Node* interpret(Node* node)
                 return value;
             }
 
-            // This might need changing
-            // At the moment functions don't return anything so we only look in variables
-            // What we're doing here is not just checking if the identifier exists but we're returning the value from the correct scope
-            // Need to check if this works in the right order (if a variable x is defined in gobal and function scope and then accessed in function scope does it return the correct value)
             for (auto i = VariableTable.rbegin(); i != VariableTable.rend(); i++)
             {
                 SymbolTable& symbolTable = *i;
@@ -467,8 +452,6 @@ Node* interpret(Node* node)
                 }
             }
 
-            // return nullptr;
-
             throw std::runtime_error(identifier->name + " doesn't exist in current scope");
         }
         break;
@@ -476,7 +459,6 @@ Node* interpret(Node* node)
         {
             print("Variable definition");
             VariableDefinition* variableDefinition = dynamic_cast<VariableDefinition*>(node);
-            bool pop = false;
 
             if (identifier_available(variableDefinition->id.name))
             {
@@ -486,7 +468,6 @@ Node* interpret(Node* node)
                     if (FunctionCall* value = dynamic_cast<FunctionCall*>(variableDefinition->assignmentExpression))
                     {
                         print("Assigning to function call");
-                        pop = true;
                         Block* function = dynamic_cast<Block*>(FunctionTable[value->id.name]);
                         if (!value->parameters.empty())
                         {
@@ -639,6 +620,13 @@ Node* interpret(Node* node)
                 Node* block = dynamic_cast<Node*>(&if_statement->block);
                 interpret(block);
             }
+        }
+        break;
+    case INTEGER:
+        {
+            print("Integer");
+            Integer* integer = dynamic_cast<Integer*>(node);
+            return integer;
         }
         break;
     case LIST:
